@@ -1,22 +1,38 @@
 {
-  "Product": "Avata",
   "ProductVersion": "1.1.1",
-  "BuildVersion": "58.17.7",
-  "Tag": "v1.1.1",
-  "BuildTag": "v58.17.7",
-  "BundleId": "bundle-5774a66927aa36b45276f623",
-  "ManifestHash": "6d851e2bf4476fde724501c02f3229f65f833c8642fedd0a48ccf5856ce1032a",
-  "AssetDirectory": "releases/58.17.7/assets",
-  "Checks": {
-    "WindowsPowerShell51": 266,
-    "HostedWindowsModes": 18,
-    "DesktopApplication": 4
-  },
-  "Assets": {
-    "Avata_58.17.7_Verification.zip": "722f5337d969db06db15e611c8a7c4a80907f4f2da2a020c6fdd6843f009590b",
-    "Avata_kor-58.17.7.zip": "7373d75d89bd4ae769b34d1d42a4391aa60046eedf8d63880802bc8b963997fa",
-    "Avata_MainPC_1.1.1.zip": "795938ae8178669529660cb6949bdf7bd96b608ddff55827e83d44c46cd8922e",
-    "avata-update.json": "ac0264a1ffd5f5ec43981c45dd5e54823a019f7dca7028add8741f341eeb665f",
-    "SHA256SUMS.txt": "4b00c531f9097e7b623acef5a14bb42cfc0ccebb6af06485c3906346dc239e55"
-  }
+  "InternalVersion": "58.17.7",
+  "Status": "VERIFIED_NOT_DEPLOYED",
+  "BundleId": "bundle-0af5ff1d162133624108e1f0",
+  "ManifestHash": "2a34d3982b2c346aec578513893a7b3467e2043c0cb8e3329464b57b5ea51a18",
+  "ChecksPassed": 330,
+  "SourceCommit": "db3f811418eec4977df3b2b5f07ee38b0aba6952",
+  "WorkflowRun": 41667135185,
+  "DeploymentHeld": true,
+  "Assets": [
+    {
+      "Bytes": 328062,
+      "Hash": "37dc787eeebf8513fc43a4c09e30c7dbac3973a36abbecd62e21751f41dcb4eb",
+      "Name": "Avata_58.17.7_Verification.zip"
+    },
+    {
+      "Bytes": 130399,
+      "Hash": "a12bd5828daf9cbd6ce4bf346e3ce2713bfbae81fd5b3ecb3cc5c353d106b1fc",
+      "Name": "Avata_kor-58.17.7.zip"
+    },
+    {
+      "Bytes": 2852,
+      "Hash": "795938ae8178669529660cb6949bdf7bd96b608ddff55827e83d44c46cd8922e",
+      "Name": "Avata_MainPC_1.1.1.zip"
+    },
+    {
+      "Bytes": 1174,
+      "Hash": "7736bbb122294d387cf2568f3bee177ff481273b8e27e1ffb7797d2fbe6bf5a6",
+      "Name": "avata-update.json"
+    },
+    {
+      "Bytes": 362,
+      "Hash": "c023b16f1570c034e9714ec86b2cd74f7138246af4750fa0c425fc1834d4e2e9",
+      "Name": "SHA256SUMS.txt"
+    }
+  ]
 }

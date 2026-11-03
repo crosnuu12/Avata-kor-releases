@@ -1,36 +1,21 @@
-# Avata 1.1.1
+# Avata 1.1.1 — prepared, not deployed
 
-메인PC와 미니PC에서 동일한 실주문·자동 시작 기능을 사용하면서 창 표시 방식을 PC별로 선택할 수 있습니다.
-프로그램 창과 트레이 표시는 **1.1.1**, 자동 업데이트 내부 빌드는 **58.17.7**입니다.
+Internal build: 58.17.7. Candidate: bundle-0af5ff1d162133624108e1f0.
 
-## PC별 화면 설정
+The midnight reader previously treated a fresh previous-day input cache as an immediate fault. This candidate records a verified day transition, requests one immediate input refresh, and continues only after today's input and two fresh ledger confirmations. It preserves existing same-process operator intent; a disarmed or restarted application is not armed by the transition.
 
-- 메인PC: 일반 창으로 시작하고 최소화하면 작업표시줄에 남습니다.
-- 미니PC: 기존처럼 트레이에서 시작하고 최소화하면 트레이로 숨깁니다.
-- 상단 **트레이 사용**으로 전환할 수 있으며 선택은 해당 PC에 저장됩니다.
-- 기존 미니PC 설정과 트레이 복원 수정을 유지합니다.
+Normal transition progress is distinguished from missing/stale input, identity changes, network failures and uncertain orders. A watchdog reports a transition that fails to finish; it does not impose a fixed delay. Reads crossing midnight discard mixed-date snapshots. Recovery after a reported live fault emits a recovery notice.
 
-## 메인PC 적용
+Manager logs now retain bounded diagnostic identifiers, and the diagnostic viewer displays live-read errors. Main PC desktop mode and miniPC tray mode remain independent; the main PC retains full live-trading capability.
 
-첨부 파일 **Avata_MainPC_1.1.1.zip**을 메인PC에서 압축 해제한 뒤
-**Avata_MainPC_1.1.1.cmd**를 실행하세요. 기존 아바타는 먼저 정상 종료합니다.
-이 실행 도구는 일반 창 설정만 저장하고 기존 Avata_kor를 실행하여 자동 업데이트를 진행합니다.
-설치된 기존 API 키·원장·계좌 설정·실주문 동의는 그대로 유지합니다.
+## Verification
+- 308 local Windows PowerShell 5.1 checks passed, including 42 day-transition checks.
+- Hosted Windows: 18 tray and 4 full desktop startup checks passed. Total: 330 checks passed.
+- All checks use isolated synthetic data and blocked broker order calls.
+- Signed package and manifest validated with the existing updater.
+- Real overnight trading has not been tested or activated.
 
-메인PC에서도 실계좌 원장 준비, 실주문 시작, 실행 후 자동 시작, 주문·체결 관리,
-텔레그램, 시트 연동, 자동 업데이트를 사용할 수 있습니다.
-실주문 기능은 계좌 대조와 기존 주문 확인 조건을 통과한 뒤 프로그램에서 선택합니다.
-미니PC에서 메인PC로 운용을 넘길 때는 미니PC의 실주문 중지와 증권사 주문 상태를 확인한 뒤 메인PC에서 시작하세요.
-
-미니PC에서는 기존 실행 도구로 업데이트하면 됩니다.
-메인PC 전용 설정 파일을 미니PC에서 실행할 필요는 없습니다.
-
-## 검증
-
-- Windows PowerShell 5.1 기본 검사 266건.
-- 격리된 Windows 환경에서 실제 창·트레이 모드 전환 검사 18건.
-- 일반 창 모드의 전체 애플리케이션 실행·상태 갱신·종료 검사 4건.
-- 공개 파일의 서명·해시 및 기존 업데이트 모듈과의 호환성을 확인합니다.
-
-검사는 가상 데이터로 수행하며 실제 주문을 전송하지 않습니다.
-개인정보, 인증정보, 실제 원장·로그, 서명 개인키는 배포에 포함하지 않습니다.
+## Deployment hold
+Prepared at the user's request for review and application on the evening of 2026-11-04 (KST).
+No GitHub release is published by this branch or its workflow. The latest automatic-update feed stays at 1.0.1 / 58.17.6. Neither installed PC is modified.
+Do not run the main-PC setup until the reviewed candidate is explicitly published for application.

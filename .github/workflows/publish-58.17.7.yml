@@ -1,32 +1,107 @@
-name: Hold Avata 1.1.1 for diagnostics
+name: Publish verified Avata 1.1.1
 on:
   push:
     branches: [main]
     paths:
       - '.github/workflows/publish-58.17.7.yml'
+      - 'releases/58.17.7/assets/**'
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
   group: avata-release-1-1-1
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
-  hold:
+  verify-tested-source:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    permissions:
-      contents: write
     steps:
-      - name: Hold the pending candidate
-        shell: bash
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Require successful validation of the exact source commit
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+        shell: bash
         run: |
           set -euo pipefail
-          if gh release view v1.1.1 --json targetCommitish,isDraft > candidate.json 2>lookup.txt; then
-            test "$(jq -r '.targetCommitish' candidate.json)" = 01bb2093062c4de422d0bcbfe93efd4e6d57263e
-            gh release edit v1.1.1 --draft=true
-            gh release edit v1.0.1 --latest
-          fi
-          echo "1.1.1 publication is paused while runtime alert details are checked."
+          gh api "repos/$GH_REPO/actions/runs/41730346412" > validated-run.json
+          python - <<'PY'
+          import json,hashlib,pathlib
+          v=json.loads(pathlib.Path('validated-run.json').read_text())
+          assert v['head_sha']=='6fbc190130a83ab3c51dec46f2ca006742961bb8'
+          assert v['conclusion']=='success' and v['status']=='completed'
+          assert v['path']=='.github/workflows/prepare-1.1.1.yml'
+          expected={
+            'Avata_kor-58.17.7.zip':'36cbe97780695a2becfdd14e02ee52e3e238658379594e7ea600b58b7456de62',
+            'Avata_58.17.7_Verification.zip':'9433499645d0db1d386f60319a414ad36ffa7b6bd47dce1f343bea6c39cbe03c',
+            'Avata_Repair_1.1.1.zip':'9433499645d0db1d386f60319a414ad36ffa7b6bd47dce1f343bea6c39cbe03c',
+            'Avata_MainPC_1.1.1.zip':'795938ae8178669529660cb6949bdf7bd96b608ddff55827e83d44c46cd8922e',
+            'avata-update.json':'245f6a64ee1ef801f4e7744f7196b4511f363a53dc8b6f86217342a707ce45bb',
+            'SHA256SUMS.txt':'011dfbbd7b7c44ed890a4c6510205f730a71eb48e10adf6841a5c832d75546d7'
+          }
+          root=pathlib.Path('releases/58.17.7/assets')
+          assert {p.name for p in root.iterdir()}==set(expected)
+          for n,h in expected.items():
+            assert hashlib.sha256((root/n).read_bytes()).hexdigest()==h,n
+          print('Exact validated assets verified; no application process is started.')
+          PY
+  publish:
+    needs: verify-tested-source
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Publish immutable signed release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          assets=releases/58.17.7/assets
+          (cd "$assets" && sha256sum --check SHA256SUMS.txt)
+          for tag in v58.17.7 v1.1.1; do
+            if gh release view "$tag" --json isDraft --jq '.isDraft' > draft.txt 2>lookup.txt; then
+              test "$(cat draft.txt)" = true || { echo "Published release is immutable."; exit 1; }
+            else
+              gh release create "$tag" --draft --target "$GITHUB_SHA" --title "Avata 1.1.1 (build 58.17.7)" --notes-file releases/1.1.1/RELEASE_NOTES.md
+            fi
+            gh release upload "$tag" "$assets/Avata_kor-58.17.7.zip" "$assets/Avata_58.17.7_Verification.zip" "$assets/Avata_Repair_1.1.1.zip" "$assets/Avata_MainPC_1.1.1.zip" "$assets/avata-update.json" "$assets/SHA256SUMS.txt" --clobber
+            if test "$tag" = v1.1.1; then
+              gh release edit "$tag" --draft=false --latest
+            else
+              gh release edit "$tag" --draft=false --latest=false
+            fi
+          done
+  verify-public:
+    needs: publish
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Check public download with original updater
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          $kit=Join-Path $env:RUNNER_TEMP 'avata-public-verify'
+          Expand-Archive -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'releases/58.17.7/assets/Avata_58.17.7_Verification.zip') -DestinationPath $kit
+          . (Join-Path $kit 'tests/original/At58.Ops.ps1')
+          . (Join-Path $kit 'tests/original/At58.Update.ps1')
+          $synthetic=Join-Path $env:RUNNER_TEMP 'avata-synthetic-host'
+          Ops-WriteJson (Join-Path $synthetic 'settings.json') @{Enabled=$true;FeedUrl='https://github.com/crosnuu12/Avata-kor-releases/releases/latest/download/avata-update.json'}
+          foreach($p in @('tests/original/channel/ready.json','tests/stable6/offer.json')){
+            Ops-WriteJson (Join-Path $synthetic 'active.json') (Ops-ReadJson (Join-Path $kit $p))
+            $remote=Up-RemoteRefresh $synthetic
+            if($remote.State -cne 'CHECKED' -or $remote.Version -cne '58.17.7'){throw 'PUBLIC_DOWNLOAD_FAILED'}
+            $offer=Up-Offer (Join-Path $synthetic 'remote-channel')
+            if($offer.Id -cne 'bundle-c698595148d2fe89ffabb7c3'){throw 'PUBLIC_IDENTITY'}
+          }
+          Write-Output 'PUBLIC FEED PASSED: original main-PC and mini-PC versions accept signed 1.1.1.'

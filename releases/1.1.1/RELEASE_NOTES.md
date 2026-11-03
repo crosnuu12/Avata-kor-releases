@@ -1,36 +1,18 @@
-# Avata 1.1.1
+# Avata 1.1.1 (58.17.7) — host repair
 
-메인PC와 미니PC에서 동일한 실주문·자동 시작 기능을 사용하면서 창 표시 방식을 PC별로 선택할 수 있습니다.
-프로그램 창과 트레이 표시는 **1.1.1**, 자동 업데이트 내부 빌드는 **58.17.7**입니다.
+The previous-day input transition is tracked without relabeling old data or changing market hours. Trading remains blocked until today's input and two account reconciliations are available.
 
-## PC별 화면 설정
+This release also:
+- Retries only Windows file sharing/lock violations during atomic manager/host writes, for a bounded total wait of about one second. Persistent, permission and disk errors still fail.
+- Records redacted host exception type, line and numeric Windows code in the existing relay's Stage column; raw exception messages are excluded.
+- Preserves bounded broker API codes and request stages in live and read logs. Unknown API failures and cash mismatches still block orders.
+- Includes a transactional host repair kit for installed 58.17.0, 58.17.6, or this exact 58.17.7 bundle. It requires all app processes closed, DISARMED, no pending commands/open/unknown orders, and a reconciled recorded close. It preserves account data, credentials, live-start consent, update preferences, and window preferences. The application must reconcile fresh data after restart.
+- Backs up all three host scripts and settings; interruption restores original bytes. No process kill, broker request, order, or consent change is performed by the installer.
 
-- 메인PC: 일반 창으로 시작하고 최소화하면 작업표시줄에 남습니다.
-- 미니PC: 기존처럼 트레이에서 시작하고 최소화하면 트레이로 숨깁니다.
-- 상단 **트레이 사용**으로 전환할 수 있으며 선택은 해당 PC에 저장됩니다.
-- 기존 미니PC 설정과 트레이 복원 수정을 유지합니다.
+The file-sharing failure was reproduced in the old writer. It is a plausible cause of the observed HOST_ERROR, not a confirmed attribution of the historical incident, which lacked detailed exception logs.
 
-## 메인PC 적용
+Windows PowerShell 5.1 and hosted Windows: 331 core/transition/host/API + 56 installer + 18 tray + 4 desktop checks passed (409 total). The original 58.17.0 updater verified the signature and exact payload. Validation: https://github.com/crosnuu12/Avata-kor-releases/actions/runs/41730346412 . Real overnight operation after installation remains to be observed.
 
-첨부 파일 **Avata_MainPC_1.1.1.zip**을 메인PC에서 압축 해제한 뒤
-**Avata_MainPC_1.1.1.cmd**를 실행하세요. 기존 아바타는 먼저 정상 종료합니다.
-이 실행 도구는 일반 창 설정만 저장하고 기존 Avata_kor를 실행하여 자동 업데이트를 진행합니다.
-설치된 기존 API 키·원장·계좌 설정·실주문 동의는 그대로 유지합니다.
+Download and completely extract Avata_Repair_1.1.1.zip. If Windows marks the download as blocked, use ZIP Properties → Unblock before extraction. Close Avata normally while DISARMED and reconciled, then run Repair_Avata.cmd. After SUCCESS: UPDATE_STAGED, start the existing Avata shortcut and verify version 1.1.1, READ_OK and CURRENT. Confirm live-start status separately.
 
-메인PC에서도 실계좌 원장 준비, 실주문 시작, 실행 후 자동 시작, 주문·체결 관리,
-텔레그램, 시트 연동, 자동 업데이트를 사용할 수 있습니다.
-실주문 기능은 계좌 대조와 기존 주문 확인 조건을 통과한 뒤 프로그램에서 선택합니다.
-미니PC에서 메인PC로 운용을 넘길 때는 미니PC의 실주문 중지와 증권사 주문 상태를 확인한 뒤 메인PC에서 시작하세요.
-
-미니PC에서는 기존 실행 도구로 업데이트하면 됩니다.
-메인PC 전용 설정 파일을 미니PC에서 실행할 필요는 없습니다.
-
-## 검증
-
-- Windows PowerShell 5.1 기본 검사 266건.
-- 격리된 Windows 환경에서 실제 창·트레이 모드 전환 검사 18건.
-- 일반 창 모드의 전체 애플리케이션 실행·상태 갱신·종료 검사 4건.
-- 공개 파일의 서명·해시 및 기존 업데이트 모듈과의 호환성을 확인합니다.
-
-검사는 가상 데이터로 수행하며 실제 주문을 전송하지 않습니다.
-개인정보, 인증정보, 실제 원장·로그, 서명 개인키는 배포에 포함하지 않습니다.
+This kit is required to replace the host scripts; the normal application auto-update does not replace those scripts. Main-PC window setup remains optional and separate; mini-PC tray preferences are preserved.
