@@ -1,0 +1,26 @@
+name: Diagnose tray restore
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'diagnostics/tray/**'
+      - '.github/workflows/tray-diagnostic.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reproduce:
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Reproduce real Windows restore on an isolated hosted runner
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          $kit=Join-Path $env:RUNNER_TEMP 'tray-reproduction'
+          Expand-Archive 'releases/58.17.5/assets/Avata_58.17.5_Verification.zip' $kit
+          & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File 'diagnostics/tray/Test-TrayRestore-Repro.ps1' -HostedRunner -Core (Join-Path $kit 'bundle/payload/At58.Core.ps1')
+          if($LASTEXITCODE -ne 0){throw 'TRAY_RESTORE_REPRODUCED'}
