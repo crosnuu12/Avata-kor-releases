@@ -14,6 +14,19 @@ concurrency:
 jobs:
   hold:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
     steps:
-      - name: Promotion paused for diagnostics
-        run: echo "Official 1.0 promotion is on hold pending alert diagnostics."
+      - name: Restore previous latest release and hold official 1.0 as a draft
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh release edit v1.0 --draft=true
+          gh release edit v58.17.4 --latest
+          test "$(gh release view v1.0 --json isDraft --jq '.isDraft')" = true
+          test "$(gh api "repos/$GH_REPO/releases/latest" --jq '.tag_name')" = v58.17.4
+          echo "Official 1.0 is held as a draft. Existing 58.17.4 signed assets are unchanged."
