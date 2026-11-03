@@ -1,4 +1,4 @@
-name: Verify prepared Avata 1.1.1 (no deployment)
+name: Verify Avata 1.1.1 host repair (no deployment)
 on:
   push:
     branches: ['prepare/1.1.1-day-transition']
@@ -31,13 +31,16 @@ jobs:
           . (Join-Path $kit 'tests/original/At58.Ops.ps1')
           . (Join-Path $kit 'tests/original/At58.Update.ps1')
           $offer=Up-Envelope (Join-Path $assets 'avata-update.json')
-          if($offer.Version -cne '58.17.7' -or $offer.Id -cne 'bundle-0af5ff1d162133624108e1f0'){throw 'CANDIDATE_IDENTITY'}
+          if($offer.Version -cne '58.17.7' -or $offer.Id -cne 'bundle-c698595148d2fe89ffabb7c3'){throw 'CANDIDATE_IDENTITY'}
           $verified=Join-Path $env:RUNNER_TEMP 'avata-signed-payload'
           Up-Extract (Join-Path $assets 'Avata_kor-58.17.7.zip') $verified $offer
           $manifest=Up-Validate $verified $offer.ManifestHash
           foreach($f in $manifest.Files){
             if((Get-FileHash -LiteralPath (Join-Path $kit ('bundle/'+$f.Name)) -Algorithm SHA256).Hash.ToLowerInvariant() -cne $f.Hash){throw 'TESTED_PAYLOAD_MISMATCH'}
           }
+          if((Get-FileHash -LiteralPath (Join-Path $assets 'Avata_Repair_1.1.1.zip')).Hash -cne (Get-FileHash -LiteralPath (Join-Path $assets 'Avata_58.17.7_Verification.zip')).Hash){throw 'REPAIR_KIT_MISMATCH'}
+          & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Test-RepairInstaller.ps1')
+          if($LASTEXITCODE -ne 0){throw 'INSTALLER_CHECKS_FAILED'}
           & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Run-Checks.ps1')
           if($LASTEXITCODE -ne 0){throw 'LOCAL_SUITE_FAILED'}
           & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Test-TrayRestore.ps1') -HostedRunner
@@ -51,4 +54,4 @@ jobs:
           $tokens=$null;$parseErrors=$null
           $null=[Management.Automation.Language.Parser]::ParseFile((Join-Path $setup 'MainPC-Start.ps1'),[ref]$tokens,[ref]$parseErrors)
           if($parseErrors.Count){throw 'SETUP_PARSE'}
-          Write-Output 'PREPARATION COMPLETE: 308 core/transition + 18 tray + 4 desktop checks; signed package accepted by original updater. No deployment, real credentials, Telegram messages or broker orders.'
+          Write-Output 'PREPARATION COMPLETE: 331 core/transition/host/API + 56 installer + 18 tray + 4 desktop checks; signed package accepted by original updater. No deployment, real credentials, Telegram messages or broker orders.'

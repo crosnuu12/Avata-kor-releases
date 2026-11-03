@@ -1,21 +1,18 @@
-# Avata 1.1.1 — prepared, not deployed
+# Avata 1.1.1 (58.17.7) — repair candidate
 
-Internal build: 58.17.7. Candidate: bundle-0af5ff1d162133624108e1f0.
+The previous-day input transition is tracked without relabeling old data or changing market hours. Trading remains blocked until today's input and two account reconciliations are available.
 
-The midnight reader previously treated a fresh previous-day input cache as an immediate fault. This candidate records a verified day transition, requests one immediate input refresh, and continues only after today's input and two fresh ledger confirmations. It preserves existing same-process operator intent; a disarmed or restarted application is not armed by the transition.
+This candidate also:
+- Retries only Windows file sharing/lock violations during atomic manager/host writes, for a bounded total wait of about one second. Persistent, permission and disk errors still fail.
+- Records redacted host exception type, line and numeric Windows code in the existing relay's Stage column; raw exception messages are excluded.
+- Preserves bounded broker API codes and request stages in live and read logs. Unknown API failures and cash mismatches still block orders.
+- Includes a transactional host repair kit for installed 58.17.0, 58.17.6, or this exact 58.17.7 bundle. It requires all app processes closed, DISARMED, no pending commands/open/unknown orders, and a reconciled recorded close. It preserves account data, credentials, live-start consent, update preferences, and window preferences. The application must reconcile fresh data after restart.
+- Backs up all three host scripts and settings; interruption restores original bytes. No process kill, broker request, order, or consent change is performed by the installer.
 
-Normal transition progress is distinguished from missing/stale input, identity changes, network failures and uncertain orders. A watchdog reports a transition that fails to finish; it does not impose a fixed delay. Reads crossing midnight discard mixed-date snapshots. Recovery after a reported live fault emits a recovery notice.
+The file-sharing failure was reproduced in the old writer. It is a plausible cause of the observed HOST_ERROR, not a confirmed attribution of the historical incident, which lacked detailed exception logs.
 
-Manager logs now retain bounded diagnostic identifiers, and the diagnostic viewer displays live-read errors. Main PC desktop mode and miniPC tray mode remain independent; the main PC retains full live-trading capability.
+Local Windows PowerShell 5.1: 331 core/transition/host/API checks + 56 installer checks passed. Hosted Windows validation is required before release. Existing 1.0.1 is still the public latest until publication.
 
-## Verification
-- 308 local Windows PowerShell 5.1 checks passed, including 42 day-transition checks.
-- Hosted Windows: 18 tray and 4 full desktop startup checks passed. Total: 330 checks passed. See STATUS.md for the exact validation run.
-- All checks use isolated synthetic data and blocked broker order calls.
-- Signed package and manifest validated with the existing updater.
-- Real overnight trading has not been tested or activated.
+Download and completely extract Avata_Repair_1.1.1.zip. If Windows marks the download as blocked, use ZIP Properties → Unblock before extraction. Close Avata normally while DISARMED and reconciled, then run Repair_Avata.cmd. After SUCCESS: UPDATE_STAGED, start the existing Avata shortcut and verify version 1.1.1, READ_OK and CURRENT. Confirm live-start status separately.
 
-## Deployment hold
-Prepared at the user's request for review and application on the evening of 2026-11-04 (KST).
-No GitHub release is published by this branch or its workflow. The latest automatic-update feed stays at 1.0.1 / 58.17.6. Neither installed PC is modified.
-Do not run the main-PC setup until the reviewed candidate is explicitly published for application.
+This kit is required to replace the host scripts; the normal application auto-update does not replace those scripts. Main-PC window setup remains optional and separate; mini-PC tray preferences are preserved.
