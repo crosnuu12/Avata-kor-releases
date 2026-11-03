@@ -1,0 +1,120 @@
+name: Publish Avata 1.0.1 build 58.17.6
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'releases/58.17.6/**'
+      - '.github/workflows/publish-58.17.6.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: avata-release-1-0-1
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Verify hashes, signature and Windows 5.1 tests
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $assetRoot = Join-Path $env:GITHUB_WORKSPACE 'releases/58.17.6/assets'
+          $expected = @('Avata_kor-58.17.6.zip','Avata_58.17.6_Verification.zip','avata-update.json')
+          $seen = @{}
+          foreach ($line in Get-Content (Join-Path $assetRoot 'SHA256SUMS.txt')) {
+            if ($line -cnotmatch '^([a-f0-9]{64})  ([A-Za-z0-9_.-]+)$') { throw 'HASH_LIST_FORMAT' }
+            $hash = $matches[1]; $name = $matches[2]
+            if ($name -cnotin $expected -or $seen.ContainsKey($name)) { throw 'HASH_LIST_NAME' }
+            $seen[$name] = $true
+            if ((Get-FileHash (Join-Path $assetRoot $name) -Algorithm SHA256).Hash.ToLowerInvariant() -cne $hash) { throw 'HASH_MISMATCH' }
+          }
+          if ($seen.Count -ne 3) { throw 'HASH_LIST_INCOMPLETE' }
+          $kit = Join-Path $env:RUNNER_TEMP 'avata-public-kit'
+          Expand-Archive (Join-Path $assetRoot 'Avata_58.17.6_Verification.zip') $kit
+          . (Join-Path $kit 'host/At58.Ops.ps1')
+          . (Join-Path $kit 'host/At58.Update.ps1')
+          $manifest = Up-Envelope (Join-Path $assetRoot 'avata-update.json')
+          if ($manifest.Version -cne '58.17.6' -or $manifest.Id -cne 'bundle-67aa5ba8ee68e80a146f4e5e' -or $manifest.ManifestHash -cne '245ba35745d96320127c862218861e013dab09821e11ef3c16c596af56132f10') { throw 'RELEASE_IDENTITY' }
+          $expanded = Join-Path $env:RUNNER_TEMP 'avata-signed-bundle'
+          Up-Extract (Join-Path $assetRoot 'Avata_kor-58.17.6.zip') $expanded $manifest
+          foreach ($name in @('release.json') + @(Up-Files)) {
+            if ((Ops-Hash (Join-Path $expanded $name)) -cne (Ops-Hash (Join-Path $kit ('bundle/' + $name)))) { throw 'KIT_BUNDLE_MISMATCH' }
+          }
+          & powershell.exe -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Run-Checks.ps1')
+          if ($LASTEXITCODE -ne 0) { throw 'WINDOWS_CHECKS_FAILED' }
+          & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Test-TrayRestore.ps1') -HostedRunner
+          if ($LASTEXITCODE -ne 0) { throw 'TRAY_RESTORE_CHECKS_FAILED' }
+  publish:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Publish verified signed release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          tag=v58.17.6
+          assets=releases/58.17.6/assets
+          (cd "$assets" && sha256sum --check SHA256SUMS.txt)
+          if gh release view "$tag" --json isDraft --jq '.isDraft' > release-draft.txt 2>release-lookup.txt; then
+            test "$(cat release-draft.txt)" = true || { echo "Published release is immutable; refusing to replace assets."; exit 1; }
+          else
+            gh release create "$tag" --draft --target "$GITHUB_SHA" --title "Avata 58.17.6" --notes-file releases/58.17.6/RELEASE_NOTES.md
+          fi
+          gh release upload "$tag" "$assets/Avata_kor-58.17.6.zip" "$assets/Avata_58.17.6_Verification.zip" "$assets/avata-update.json" "$assets/SHA256SUMS.txt" --clobber
+          gh release edit "$tag" --draft=false --latest=false
+          official=v1.0.1
+          if gh release view "$official" --json isDraft --jq '.isDraft' > official-draft.txt 2>official-lookup.txt; then
+            test "$(cat official-draft.txt)" = true || { echo "Published official release is immutable."; exit 1; }
+          else
+            gh release create "$official" --draft --target "$GITHUB_SHA" --title "Avata 1.0.1 (build 58.17.6)" --notes-file releases/1.0.1/RELEASE_NOTES.md
+          fi
+          gh release upload "$official" "$assets/Avata_kor-58.17.6.zip" "$assets/Avata_58.17.6_Verification.zip" "$assets/avata-update.json" "$assets/SHA256SUMS.txt" --clobber
+          gh release edit "$official" --draft=false --latest
+  verify-public:
+    needs: publish
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Verify public feed with original updater
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $kit = Join-Path $env:RUNNER_TEMP 'avata-verify'
+          $assets = Join-Path $env:GITHUB_WORKSPACE 'releases/58.17.6/assets'
+          Expand-Archive (Join-Path $assets 'Avata_58.17.6_Verification.zip') $kit
+          . (Join-Path $kit 'tests/original/At58.Ops.ps1')
+          . (Join-Path $kit 'tests/original/At58.Update.ps1')
+          $synthetic = Join-Path $env:RUNNER_TEMP 'avata-synthetic-host'
+          Ops-WriteJson (Join-Path $synthetic 'settings.json') @{Enabled=$true;FeedUrl='https://github.com/crosnuu12/Avata-kor-releases/releases/latest/download/avata-update.json'}
+          Ops-WriteJson (Join-Path $synthetic 'active.json') (Ops-ReadJson (Join-Path $kit 'tests/original/channel/ready.json'))
+          $remote = Up-RemoteRefresh $synthetic
+          if ($remote.State -cne 'CHECKED' -or $remote.Version -cne '58.17.6') { throw ('PUBLIC_DOWNLOAD_FAILED_' + $remote.Code) }
+          $offer = Up-Offer (Join-Path $synthetic 'remote-channel')
+          if (!$offer -or $offer.Id -cne 'bundle-67aa5ba8ee68e80a146f4e5e') { throw 'PUBLIC_IDENTITY' }
+          Ops-WriteJson (Join-Path $synthetic 'active.json') @{Id='bundle-235855b5c0f305d87fb679b6';Version='58.17.4';ManifestHash='855220b13551f257b549f2e7c71ac3fc38d5970837747874e8b795373a639288'}
+          $fromPrevious = Up-RemoteRefresh $synthetic
+          if ($fromPrevious.State -cne 'CHECKED' -or $fromPrevious.Version -cne '58.17.6') { throw 'PREVIOUS_BUILD_UPGRADE_FAILED' }
+          Ops-WriteJson (Join-Path $synthetic 'active.json') @{Id='bundle-5ca872418d64c72738fcfb02';Version='58.17.5';ManifestHash='96d00f1046849548e482925906890b993a6e96b9c90bed20b1e4c878e6e06223'}
+          $fromOfficial = Up-RemoteRefresh $synthetic
+          if ($fromOfficial.State -cne 'CHECKED' -or $fromOfficial.Version -cne '58.17.6') { throw 'OFFICIAL_10_UPGRADE_FAILED' }
+          Ops-WriteJson (Join-Path $synthetic 'active.json') @{Id=$offer.Id;Version=$offer.Version;ManifestHash=$offer.ManifestHash}
+          $same = Up-RemoteRefresh $synthetic
+          if ($same.State -cne 'CHECKED') { throw 'PUBLIC_SAME_VERSION' }
+          Write-Output 'PUBLIC FEED CHECKS PASSED; signature and download verified by original updater.'

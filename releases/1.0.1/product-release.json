@@ -1,0 +1,20 @@
+{
+  "Product": "Avata",
+  "ProductVersion": "1.0.1",
+  "BuildVersion": "58.17.6",
+  "Tag": "v1.0.1",
+  "BuildTag": "v58.17.6",
+  "BundleId": "bundle-67aa5ba8ee68e80a146f4e5e",
+  "ManifestHash": "245ba35745d96320127c862218861e013dab09821e11ef3c16c596af56132f10",
+  "AssetDirectory": "releases/58.17.6/assets",
+  "Checks": {
+    "WindowsPowerShell51": 254,
+    "HostedWindowsTrayRestore": 10
+  },
+  "Assets": {
+    "Avata_58.17.6_Verification.zip": "411cb8ca93519d6eeb0143a480a60ecc0ef8e6a0754ebc4583565dd6c9298bc4",
+    "Avata_kor-58.17.6.zip": "253a5ec3efb3a7c5d2255849794334ef4a5d6d785c06471f89bbccb206580b27",
+    "avata-update.json": "9a4cfa9a666321dfe99a0dadda9110894a4a332c9c102be69fe2a9b896990e4b",
+    "SHA256SUMS.txt": "5ac8bef8c4ac2bb9a19572b3af0769bcdab09083d9cc9175d5176964ef5ecd11"
+  }
+}
