@@ -1,0 +1,22 @@
+name: Verify public Avata update
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-public-update.yml'
+      - 'tools/Verify-PublicUpdate.ps1'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-public-feed:
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Download public release using original Windows 5.1 updater
+        shell: powershell
+        run: |
+          ./tools/Verify-PublicUpdate.ps1 -AssetRoot (Join-Path $env:GITHUB_WORKSPACE 'releases/58.17.2/assets') -WorkRoot (Join-Path $env:RUNNER_TEMP 'avata-public-feed-check')
