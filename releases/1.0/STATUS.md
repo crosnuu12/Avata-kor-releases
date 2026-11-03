@@ -1,3 +1,3 @@
-# Promotion on hold
+# Official 1.0
 
-Official 1.0 promotion is paused at user request pending runtime alert diagnostics. Do not resume publication until diagnostics are reviewed.
+Build 58.17.5 fixes the diagnosed false alerts. Publication is gated on the signed bundle and 254 Windows PowerShell 5.1 checks in publish-58.17.5.yml.

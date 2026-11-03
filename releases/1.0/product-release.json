@@ -1,17 +1,17 @@
 {
   "Product": "Avata",
   "ProductVersion": "1.0",
-  "BuildVersion": "58.17.4",
+  "BuildVersion": "58.17.5",
   "Tag": "v1.0",
-  "SourceCommit": "a37dbad3909385a73f3eb1dda81e5373ae1043af",
-  "BundleId": "bundle-235855b5c0f305d87fb679b6",
-  "ManifestHash": "855220b13551f257b549f2e7c71ac3fc38d5970837747874e8b795373a639288",
-  "AssetDirectory": "releases/58.17.4/assets",
+  "BuildTag": "v58.17.5",
+  "BundleId": "bundle-5ca872418d64c72738fcfb02",
+  "ManifestHash": "96d00f1046849548e482925906890b993a6e96b9c90bed20b1e4c878e6e06223",
+  "AssetDirectory": "releases/58.17.5/assets",
+  "Checks": 254,
   "Assets": {
-    "Avata_kor-58.17.4.zip": "1f69b2f290815dcfe0371f660e348d0b91f88c17216d91d8f3922370e3f49c8a",
-    "Avata_58.17.4_Verification.zip": "234e0eba0c8e8302184ba24002697cf09afaf349687ed9e886293c891a1a39ef",
-    "avata-update.json": "d86e7e0bd6a0ca4b1353a961bcb3964231dcaa2e954c92979d41062471b1258e",
-    "SHA256SUMS.txt": "34997d232ea5b75dc0a1779dcc8647ec81644a9e328ef16f630691f296ff6427"
-  },
-  "Promotion": "Byte-identical promotion of verified 58.17.4; no application, settings or signing changes."
+    "Avata_kor-58.17.5.zip": "b89131b56234b8fa2ebe7b86a3baa7f247da959af729293930ea1b6a92e4853c",
+    "Avata_58.17.5_Verification.zip": "79d446003f5482180d66f779f1471f271b8b5c7a4f0437efdac50dd5a51f3d38",
+    "avata-update.json": "a35e0a4726ff3377996f6d35696b68c9985bf241a1f841ae82db2ca97f996c00",
+    "SHA256SUMS.txt": "d87919a38b871554e14eb0f524895e887dcf9a5ef4f622a4dbdaa2b9040d59b7"
+  }
 }

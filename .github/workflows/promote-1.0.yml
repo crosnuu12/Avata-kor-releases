@@ -1,32 +1,10 @@
-name: Avata 1.0 promotion on hold
+name: Superseded official 1.0 promotion
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'releases/1.0/**'
-      - '.github/workflows/promote-1.0.yml'
   workflow_dispatch:
 permissions:
   contents: read
-concurrency:
-  group: avata-release-1-0
-  cancel-in-progress: true
 jobs:
-  hold:
+  info:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: write
     steps:
-      - name: Restore previous latest release and hold official 1.0 as a draft
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          gh release edit v1.0 --draft=true
-          gh release edit v58.17.4 --latest
-          test "$(gh release view v1.0 --json isDraft --jq '.isDraft')" = true
-          test "$(gh api "repos/$GH_REPO/releases/latest" --jq '.tag_name')" = v58.17.4
-          echo "Official 1.0 is held as a draft. Existing 58.17.4 signed assets are unchanged."
+      - run: echo "Official 1.0 is maintained by publish-58.17.5.yml."
