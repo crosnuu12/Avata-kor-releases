@@ -1,0 +1,22 @@
+{
+  "Product": "Avata",
+  "ProductVersion": "1.1.1",
+  "BuildVersion": "58.17.7",
+  "Tag": "v1.1.1",
+  "BuildTag": "v58.17.7",
+  "BundleId": "bundle-5774a66927aa36b45276f623",
+  "ManifestHash": "6d851e2bf4476fde724501c02f3229f65f833c8642fedd0a48ccf5856ce1032a",
+  "AssetDirectory": "releases/58.17.7/assets",
+  "Checks": {
+    "WindowsPowerShell51": 266,
+    "HostedWindowsModes": 18,
+    "DesktopApplication": 4
+  },
+  "Assets": {
+    "Avata_58.17.7_Verification.zip": "722f5337d969db06db15e611c8a7c4a80907f4f2da2a020c6fdd6843f009590b",
+    "Avata_kor-58.17.7.zip": "7373d75d89bd4ae769b34d1d42a4391aa60046eedf8d63880802bc8b963997fa",
+    "Avata_MainPC_1.1.1.zip": "795938ae8178669529660cb6949bdf7bd96b608ddff55827e83d44c46cd8922e",
+    "avata-update.json": "ac0264a1ffd5f5ec43981c45dd5e54823a019f7dca7028add8741f341eeb665f",
+    "SHA256SUMS.txt": "4b00c531f9097e7b623acef5a14bb42cfc0ccebb6af06485c3906346dc239e55"
+  }
+}
