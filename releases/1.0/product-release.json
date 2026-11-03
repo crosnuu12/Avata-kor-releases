@@ -1,0 +1,17 @@
+{
+  "Product": "Avata",
+  "ProductVersion": "1.0",
+  "BuildVersion": "58.17.4",
+  "Tag": "v1.0",
+  "SourceCommit": "a37dbad3909385a73f3eb1dda81e5373ae1043af",
+  "BundleId": "bundle-235855b5c0f305d87fb679b6",
+  "ManifestHash": "855220b13551f257b549f2e7c71ac3fc38d5970837747874e8b795373a639288",
+  "AssetDirectory": "releases/58.17.4/assets",
+  "Assets": {
+    "Avata_kor-58.17.4.zip": "1f69b2f290815dcfe0371f660e348d0b91f88c17216d91d8f3922370e3f49c8a",
+    "Avata_58.17.4_Verification.zip": "234e0eba0c8e8302184ba24002697cf09afaf349687ed9e886293c891a1a39ef",
+    "avata-update.json": "d86e7e0bd6a0ca4b1353a961bcb3964231dcaa2e954c92979d41062471b1258e",
+    "SHA256SUMS.txt": "34997d232ea5b75dc0a1779dcc8647ec81644a9e328ef16f630691f296ff6427"
+  },
+  "Promotion": "Byte-identical promotion of verified 58.17.4; no application, settings or signing changes."
+}
