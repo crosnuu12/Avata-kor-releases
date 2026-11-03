@@ -1,0 +1,54 @@
+name: Verify prepared Avata 1.1.1 (no deployment)
+on:
+  push:
+    branches: ['prepare/1.1.1-day-transition']
+    paths:
+      - '.github/workflows/prepare-1.1.1.yml'
+      - 'releases/58.17.7/assets/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: windows-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Verify signed candidate and run isolated checks
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          $assets=Join-Path $env:GITHUB_WORKSPACE 'releases/58.17.7/assets'
+          foreach($line in Get-Content -LiteralPath (Join-Path $assets 'SHA256SUMS.txt')){
+            if($line -cnotmatch '^([a-f0-9]{64})  ([A-Za-z0-9_.-]+)$'){throw 'HASH_FORMAT'}
+            $expected=$Matches[1];$name=$Matches[2]
+            if((Get-FileHash -LiteralPath (Join-Path $assets $name) -Algorithm SHA256).Hash.ToLowerInvariant() -cne $expected){throw ('HASH_MISMATCH '+$name)}
+          }
+          $kit=Join-Path $env:RUNNER_TEMP 'avata-prepared-kit'
+          Expand-Archive -LiteralPath (Join-Path $assets 'Avata_58.17.7_Verification.zip') -DestinationPath $kit
+          . (Join-Path $kit 'tests/original/At58.Ops.ps1')
+          . (Join-Path $kit 'tests/original/At58.Update.ps1')
+          $offer=Up-Envelope (Join-Path $assets 'avata-update.json')
+          if($offer.Version -cne '58.17.7' -or $offer.Id -cne 'bundle-0af5ff1d162133624108e1f0'){throw 'CANDIDATE_IDENTITY'}
+          $verified=Join-Path $env:RUNNER_TEMP 'avata-signed-payload'
+          Up-Extract (Join-Path $assets 'Avata_kor-58.17.7.zip') $verified $offer
+          $manifest=Up-Validate $verified $offer.ManifestHash
+          foreach($f in $manifest.Files){
+            if((Get-FileHash -LiteralPath (Join-Path $kit ('bundle/'+$f.Name)) -Algorithm SHA256).Hash.ToLowerInvariant() -cne $f.Hash){throw 'TESTED_PAYLOAD_MISMATCH'}
+          }
+          & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Run-Checks.ps1')
+          if($LASTEXITCODE -ne 0){throw 'LOCAL_SUITE_FAILED'}
+          & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Test-TrayRestore.ps1') -HostedRunner
+          if($LASTEXITCODE -ne 0){throw 'TRAY_CHECKS_FAILED'}
+          & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Test-DesktopStartup.ps1')
+          if($LASTEXITCODE -ne 0){throw 'DESKTOP_STARTUP_FAILED'}
+          $setup=Join-Path $env:RUNNER_TEMP 'avata-main-setup'
+          Expand-Archive -LiteralPath (Join-Path $assets 'Avata_MainPC_1.1.1.zip') -DestinationPath $setup
+          $names=@(Get-ChildItem -LiteralPath $setup -File | Select-Object -ExpandProperty Name | Sort-Object)
+          if(($names -join '|') -cne 'Avata_MainPC_1.1.1.cmd|MainPC-Start.ps1|README.txt'){throw 'SETUP_FILES'}
+          $tokens=$null;$parseErrors=$null
+          $null=[Management.Automation.Language.Parser]::ParseFile((Join-Path $setup 'MainPC-Start.ps1'),[ref]$tokens,[ref]$parseErrors)
+          if($parseErrors.Count){throw 'SETUP_PARSE'}
+          Write-Output 'PREPARATION COMPLETE: 308 core/transition + 18 tray + 4 desktop checks; signed package accepted by original updater. No deployment, real credentials, Telegram messages or broker orders.'
