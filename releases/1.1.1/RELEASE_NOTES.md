@@ -10,7 +10,7 @@ Manager logs now retain bounded diagnostic identifiers, and the diagnostic viewe
 
 ## Verification
 - 308 local Windows PowerShell 5.1 checks passed, including 42 day-transition checks.
-- Hosted Windows: 18 tray and 4 full desktop startup checks pending.
+- Hosted Windows: 18 tray and 4 full desktop startup checks passed. Total: 330 checks passed. See STATUS.md for the exact validation run.
 - All checks use isolated synthetic data and blocked broker order calls.
 - Signed package and manifest validated with the existing updater.
 - Real overnight trading has not been tested or activated.

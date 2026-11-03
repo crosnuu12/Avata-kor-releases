@@ -1,11 +1,13 @@
 {
   "ProductVersion": "1.1.1",
   "InternalVersion": "58.17.7",
-  "Status": "PREPARED_NOT_DEPLOYED",
+  "Status": "VERIFIED_NOT_DEPLOYED",
   "BundleId": "bundle-0af5ff1d162133624108e1f0",
   "ManifestHash": "2a34d3982b2c346aec578513893a7b3467e2043c0cb8e3329464b57b5ea51a18",
-  "LocalChecks": 308,
-  "HostedChecks": 22,
+  "ChecksPassed": 330,
+  "SourceCommit": "db3f811418eec4977df3b2b5f07ee38b0aba6952",
+  "WorkflowRun": 41667135185,
+  "DeploymentHeld": true,
   "Assets": [
     {
       "Bytes": 328062,

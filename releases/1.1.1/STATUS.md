@@ -1,21 +1,56 @@
-# Avata 1.1.1 — prepared, not deployed
+# Avata 1.1.1 적용 준비 완료
 
-Internal build: 58.17.7. Candidate: bundle-0af5ff1d162133624108e1f0.
+- 상태: **검증 완료 / 배포 및 실제 PC 적용 보류**
+- 공식 버전: **1.1.1** · 내부 빌드: **58.17.7**
+- 사용자 적용 예정: **2026년 11월 4일 저녁 (한국시간)**
+- 현재 자동업데이트 배포 버전: **1.0.1 / 58.17.6**
+- 미니PC와 메인PC의 설치 파일, 인증정보, 원장, 실주문 설정은 변경하지 않았습니다.
 
-The midnight reader previously treated a fresh previous-day input cache as an immediate fault. This candidate records a verified day transition, requests one immediate input refresh, and continues only after today's input and two fresh ledger confirmations. It preserves existing same-process operator intent; a disarmed or restarted application is not armed by the transition.
+## 수정 내용
 
-Normal transition progress is distinguished from missing/stale input, identity changes, network failures and uncertain orders. A watchdog reports a transition that fails to finish; it does not impose a fixed delay. Reads crossing midnight discard mixed-date snapshots. Recovery after a reported live fault emits a recovery notice.
+날짜가 바뀌면 검증된 전날 입력으로 거래하지 않고 오늘 입력 갱신을 바로 요청합니다. 오늘 입력 확보 → 새 계좌 조회 → 계좌 대조 2회 완료 순서로 전환합니다. 준비가 끝나면 정해진 대기시간 없이 기존 운영 상태를 이어갑니다.
 
-Manager logs now retain bounded diagnostic identifiers, and the diagnostic viewer displays live-read errors. Main PC desktop mode and miniPC tray mode remain independent; the main PC retains full live-trading capability.
+기존 실행에서 켜둔 실주문 상태만 유지합니다. 꺼져 있거나 새로 시작한 프로그램을 날짜 전환 기능이 임의로 켜지 않습니다. 중간에 날짜가 바뀐 조회 결과는 폐기합니다.
 
-## Verification
-- 308 local Windows PowerShell 5.1 checks passed, including 42 day-transition checks.
-- Hosted Windows: 18 tray and 4 full desktop startup checks pending.
-- All checks use isolated synthetic data and blocked broker order calls.
-- Signed package and manifest validated with the existing updater.
-- Real overnight trading has not been tested or activated.
+정상 전환 대기는 장애와 구분합니다. 입력이 없거나 오래되었거나, 계좌 식별이 다르거나, 네트워크 오류 또는 확인되지 않은 주문이 있으면 기존 오류 감지를 유지합니다. 완료되지 않는 전환은 최대 2분의 감시 한도를 넘어 조용히 대기하지 않도록 장애로 알립니다. 이 시간은 실행을 미루는 대기시간이 아닙니다.
 
-## Deployment hold
-Prepared at the user's request for review and application on the evening of 2026-11-04 (KST).
-No GitHub release is published by this branch or its workflow. The latest automatic-update feed stays at 1.0.1 / 58.17.6. Neither installed PC is modified.
-Do not run the main-PC setup until the reviewed candidate is explicitly published for application.
+장애 이후 정상 복구 알림과 안전한 세부 진단코드 기록을 추가했습니다. 진단 화면에서 누락되던 실계좌 조회 오류도 표시합니다. 메인PC의 일반 창 시작과 미니PC의 트레이 시작을 각각 유지하며 양쪽 모두 실주문 기능을 포함합니다.
+
+## 검증 결과
+
+**총 330개 통과**
+
+| 검사 | 결과 |
+|---|---:|
+| 기존 기능·날짜 전환 등 Windows PowerShell 5.1 검사 | 308개 통과 |
+| 실제 트레이 이벤트·복원 검사 | 18개 통과 |
+| 전체 프로그램 일반 창 시작·종료 검사 | 4개 통과 |
+
+날짜 전환 검사 42개에는 자정 통과, 입력이 먼저 갱신된 경우, 입력 지연·실패, 월·연도 변경, 계좌 대조 2회, 기존 실주문 상태 유지, 비활성 상태 유지, 재시작 시 승인 미생성, 실제 오류·복구 알림, 중복 작업 방지 등이 포함됩니다.
+
+[Windows 검증 실행 결과](https://github.com/crosnuu12/Avata-kor-releases/actions/runs/41667135185)
+
+검증 대상 소스 커밋: `db3f811418eec4977df3b2b5f07ee38b0aba6952`
+
+모든 검사는 격리된 합성 데이터로 진행했고 실제 증권 주문, 인증정보, 텔레그램 전송을 사용하지 않았습니다. 기존 58.17.0 업데이트 모듈로 새 서명과 패키지 검증도 통과했습니다. 실제 미니PC에서 다음 자정을 통과하는 운영 검증은 적용 후 확인해야 합니다.
+
+## 적용할 때
+
+1. 미니PC의 최신 조회·주문 상태를 확인합니다.
+2. 검증된 아래 파일 그대로 배포하고 자동업데이트를 연결합니다.
+3. 미니PC에서 버전·조회·계좌 대조·트레이 동작을 확인합니다.
+4. 메인PC의 일반 창 설정 도구로 동일 버전을 준비하고 확인합니다.
+
+현재 이 준비 브랜치와 검증 워크플로에는 배포 작업이 없습니다. 사용자가 적용을 재개하기 전에는 최신 업데이트 피드를 바꾸지 않습니다. 메인PC 설정 도구도 배포를 재개한 후 사용합니다.
+
+## 파일 식별
+
+번들: `bundle-0af5ff1d162133624108e1f0`
+
+매니페스트 SHA-256: `2a34d3982b2c346aec578513893a7b3467e2043c0cb8e3329464b57b5ea51a18`
+
+- Avata_58.17.7_Verification.zip · 328062 bytes · SHA-256 `37dc787eeebf8513fc43a4c09e30c7dbac3973a36abbecd62e21751f41dcb4eb`
+- Avata_kor-58.17.7.zip · 130399 bytes · SHA-256 `a12bd5828daf9cbd6ce4bf346e3ce2713bfbae81fd5b3ecb3cc5c353d106b1fc`
+- Avata_MainPC_1.1.1.zip · 2852 bytes · SHA-256 `795938ae8178669529660cb6949bdf7bd96b608ddff55827e83d44c46cd8922e`
+- avata-update.json · 1174 bytes · SHA-256 `7736bbb122294d387cf2568f3bee177ff481273b8e27e1ffb7797d2fbe6bf5a6`
+- SHA256SUMS.txt · 362 bytes · SHA-256 `c023b16f1570c034e9714ec86b2cd74f7138246af4750fa0c425fc1834d4e2e9`
