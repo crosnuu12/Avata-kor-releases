@@ -4,8 +4,8 @@
   "InternalVersion": "58.17.8",
   "Id": "bundle-5d6e0eb02f86ac466df09cea",
   "ManifestHash": "062c855b611296d1a5d5998a836422c8bdf6f824ccf6cbfb3abc4c040693ca8e",
-  "ArchiveSHA256": "02f58fc822e1d4bcca65316f9e89d199121ae76a3a8246b7d8fb4b97b83d2145",
-  "ArchiveBytes": 493464,
+  "ArchiveSHA256": "82d52ac404ca2929c718ccc0a5015790f5e09252b3bdbd9d68f6532d4d7b7f32",
+  "ArchiveBytes": 493701,
   "NetworkTests": "synthetic only",
   "LiveInstalled": false
 }

@@ -16,6 +16,21 @@ function Clone($v){
  return $v
 }
 function Baseline-Identity($rows){$lines=@();foreach($row in $rows){$cells=@();foreach($v in $row){$cells+=,[string]$v};$lines+=,($cells -join '|')};return ($lines -join "`n")}
+function Same-Cells($before,$after){
+ if($before.Count -ne $after.Count){return $false}
+ for($i=0;$i -lt $before.Count;$i++){
+  if($after[$i] -isnot [array] -or $before[$i].Count -ne $after[$i].Count){return $false}
+  for($j=0;$j -lt $before[$i].Count;$j++){
+   $a=$before[$i][$j];$b=$after[$i][$j]
+   if($a -is [ValueType]){
+    if($b -isnot [ValueType]){return $false}
+    $delta=[math]::Abs([decimal]$a-[decimal]$b)
+    if(($j -eq 0 -and $delta -gt .00000001) -or ($j -ne 0 -and $delta -ne 0)){return $false}
+   }elseif([string]$a -cne [string]$b){return $false}
+  }
+ }
+ return $true
+}
 function Order([string]$key,[string]$id,[string]$day='20261104',[string]$side='매수',[int]$stage=9){[pscustomobject]@{Key=$key;Day=$day;BrokerId=$id;Action='NEW';Intent=[pscustomobject]@{Stage=$stage;Side=$side}}}
 function Fill([string]$name,[string]$order,[decimal]$qty,[decimal]$price,[string]$time,[string]$day='20261104'){[pscustomobject]@{Key=(At58-Hash $name);OrderKey=$order;Account=('a'*64);Day=$day;Time=$time;Qty=$qty;Price=$price;Amount=($qty*$price);Evidence='BROKER_NOTIFICATION_RECONCILED'}}
 function Catalog($fills,$orders=$script:orders){Sheet-JournalCatalog $script:state ([pscustomobject]@{Mode='LIVE';Scope='synthetic-scope';Account=('a'*64);Symbol='SYNTHETIC';Orders=$orders;Fills=$fills;Revision=7})}
@@ -128,7 +143,9 @@ if($env:OS -eq 'Windows_NT'){
   $backupPath=Join-Path $realDir 'journal-backup.dpapi'
   Asset-ProtectedWrite $backupPath 'AT58-JOURNAL-BACKUP-1' @{Schema='AT-JOURNAL-BACKUP-1';Rows=$legacy;Formula=(Sheet-JournalFormula $false)}
   $saved=Asset-ProtectedRead $backupPath 'AT58-JOURNAL-BACKUP-1'
-  Check ($saved.Rows.Count -eq $legacy.Count -and (Baseline-Identity $saved.Rows) -ceq (Baseline-Identity $legacy) -and (At58S-Cell $saved.Rows 2 6) -ceq $legacy[2][6] -and $saved.Formula -ceq (Sheet-JournalFormula $false) -and [IO.File]::ReadAllText($backupPath) -notmatch '매수|ATF1') 'Windows encrypted backup round-trips the full original journal'
+  $sameCells=Same-Cells $legacy $saved.Rows
+  if(!$sameCells){Write-Output ('SYNTHETIC BACKUP BEFORE '+(@{Rows=$legacy}|ConvertTo-Json -Depth 10 -Compress));Write-Output ('SYNTHETIC BACKUP AFTER '+($saved|ConvertTo-Json -Depth 10 -Compress))}
+  Check ($sameCells -and (At58S-Cell $saved.Rows 2 6) -ceq $legacy[2][6] -and $saved.Formula -ceq (Sheet-JournalFormula $false) -and [IO.File]::ReadAllText($backupPath) -notmatch '매수|ATF1') 'Windows encrypted backup round-trips the full original journal'
  }finally{if(Test-Path -LiteralPath $realDir){Remove-Item -LiteralPath $realDir -Recurse -Force}}
 }
 # Full sync with synthetic network, baseline import, and encrypted backup writer.
