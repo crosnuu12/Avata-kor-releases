@@ -1,0 +1,65 @@
+name: Verify and publish Avata 1.1.2 with recovered update key
+on:
+  push:
+    branches: [prepare/key-20261104, main]
+    paths:
+      - 'releases/key-20261104/**'
+      - '.github/workflows/rotate-update-key.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: avata-key-recovery-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Verify source, actual signatures and atomic recovery on synthetic installations
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference='Stop'
+          $run=gh api "repos/$env:GITHUB_REPOSITORY/actions/runs/41840405969" | ConvertFrom-Json
+          if($LASTEXITCODE -ne 0 -or $run.head_sha -cne 'cd8576d58bc897fb1174186df0830daadc9c7fd1' -or $run.conclusion -cne 'success'){throw 'SOURCE_NOT_VERIFIED'}
+          python -m pip install --disable-pip-version-check cryptography==50.0.2
+          if($LASTEXITCODE -ne 0){throw 'DEPENDENCY_FAILED'}
+          $candidate=Join-Path $env:GITHUB_WORKSPACE 'features/telegram-start-1.1.2/Avata_1.1.2_Telegram_Verification.zip'
+          $assets=Join-Path $env:RUNNER_TEMP 'avata-signed-assets'
+          Copy-Item -LiteralPath releases/key-20261104/assets -Destination $assets -Recurse
+          Copy-Item -LiteralPath $candidate -Destination (Join-Path $assets 'Avata_58.17.8_Verification.zip')
+          python releases/key-20261104/Verify-Public-Assets.py $candidate $assets
+          if($LASTEXITCODE -ne 0){throw 'PUBLIC_ASSETS_FAILED'}
+          $kit=Join-Path $env:RUNNER_TEMP 'avata-source-kit';Expand-Archive -LiteralPath $candidate -DestinationPath $kit
+          $recovery=Join-Path $env:RUNNER_TEMP 'avata-trust-recovery';Expand-Archive -LiteralPath (Join-Path $assets 'Avata_Update_Key_Recovery_1.1.2.zip') -DestinationPath $recovery
+          & releases/key-20261104/Test-Recovery.ps1 -Recovery $recovery -Candidate $kit
+  publish:
+    if: github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: windows-latest
+    timeout-minutes: 8
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Publish pre-signed assets and verify the public auto-update channel
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $ErrorActionPreference='Stop'
+          $assets=Join-Path $env:RUNNER_TEMP 'avata-signed-assets'
+          Copy-Item -LiteralPath releases/key-20261104/assets -Destination $assets -Recurse
+          Copy-Item -LiteralPath features/telegram-start-1.1.2/Avata_1.1.2_Telegram_Verification.zip -Destination (Join-Path $assets 'Avata_58.17.8_Verification.zip')
+          $recovery=Join-Path $env:RUNNER_TEMP 'avata-trust-recovery';Expand-Archive -LiteralPath (Join-Path $assets 'Avata_Update_Key_Recovery_1.1.2.zip') -DestinationPath $recovery
+          & releases/key-20261104/Publish-Rotated.ps1 -Assets $assets -Recovery $recovery
