@@ -1,4 +1,4 @@
-name: Verify Avata Telegram start (no deployment)
+name: Verify Avata Telegram start and input diagnostics (no deployment)
 on:
   push:
     branches: ['prepare/1.1.2-telegram-start']
@@ -26,7 +26,7 @@ jobs:
           if((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant() -cne $meta.ArchiveSHA256){throw 'CANDIDATE_HASH'}
           $kit=Join-Path $env:RUNNER_TEMP 'avata-telegram-candidate'
           Expand-Archive -LiteralPath $archive -DestinationPath $kit
-          foreach($name in @('At58.Telegram.ps1','At58.Manager.ps1','payload/At58.Core.ps1','payload/esbada_Merits_AT_v58.ps1')){
+          foreach($name in @('At58.Telegram.ps1','At58.Manager.ps1','At58.Sheets.ps1','At58.SheetWorker.ps1','payload/At58.Core.ps1','payload/esbada_Merits_AT_v58.ps1')){
             if((Get-FileHash -LiteralPath (Join-Path $source ('source/'+$name))).Hash -cne (Get-FileHash -LiteralPath (Join-Path $kit ('bundle/'+$name))).Hash){throw 'REVIEW_SOURCE_MISMATCH'}
           }
           . (Join-Path $kit 'host/At58.Ops.ps1')
@@ -39,4 +39,4 @@ jobs:
           if($LASTEXITCODE -ne 0){throw 'TRAY_FAILED'}
           & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Test-DesktopStartup.ps1')
           if($LASTEXITCODE -ne 0){throw 'DESKTOP_FAILED'}
-          Write-Output 'TELEGRAM CANDIDATE VERIFIED: 435 checks. No deployment, actual credentials, Telegram messages or broker orders.'
+          Write-Output 'TELEGRAM AND INPUT DIAGNOSTICS CANDIDATE VERIFIED: 475 checks. No deployment, actual credentials, Telegram messages or broker orders.'

@@ -4184,6 +4184,105 @@ function At58X-Step($owner,$source,$snapshot,$costRows,$receiptBook,[string]$reg
 
 # Explicit application adapter; importing it neither starts a loop nor arms execution.
 
+# Input diagnostics are observational: no retries, input substitutions or control changes.
+function At58ID-Error($record){
+ $type='';$hr=0;$network='';$http=0
+ try{
+  $e=$record.Exception
+  for($i=0;$e -and $i -lt 8;$i++){
+   $n=$e.GetType().Name
+   $type=if($n -cin @('IOException','FileNotFoundException','DirectoryNotFoundException','UnauthorizedAccessException','CryptographicException','FormatException','ArgumentException','InvalidOperationException','WebException','TimeoutException','RuntimeException','JsonReaderException','PSArgumentException','InvalidDataException')){$n}else{'Other'}
+   $hr=[int]$e.HResult
+   if($e -is [Net.WebException]){$network=[string]$e.Status}
+   try{if($e.Response -and [int]$e.Response.StatusCode -ge 100 -and [int]$e.Response.StatusCode -le 599){$http=[int]$e.Response.StatusCode}}catch{}
+   $e=$e.InnerException
+  }
+ }catch{}
+ if($network -cnotin @('Timeout','NameResolutionFailure','ConnectFailure','ConnectionClosed','ReceiveFailure','SendFailure','ProtocolError','TrustFailure','SecureChannelFailure','RequestCanceled','ProxyNameResolutionFailure','KeepAliveFailure','UnknownError')){$network=''}
+ return [pscustomobject]@{ErrorType=$type;HResult=$hr;Win32=($hr -band 65535);Network=$network;Http=$http}
+}
+function At58ID-File([string]$root){
+ try{$f=[IO.FileInfo]::new((Join-Path $root 'strategy-input.dpapi'));$f.Refresh();return [pscustomobject]@{Exists=$f.Exists;Bytes=$(if($f.Exists){$f.Length}else{0});LastWriteUtc=$(if($f.Exists){$f.LastWriteTimeUtc.ToString('o')}else{''})}}catch{return $null}
+}
+function At58ID-Write([string]$root,[string]$channel,$entry,[datetime]$now){
+ # Each writer owns its channel. Bound disk usage to two 2-MiB files/day, seven days.
+ $stream=$null
+ try{
+  if($channel -cnotin @('read','refresh')){return}
+  $dir=Join-Path $root 'input-diagnostics';[void][IO.Directory]::CreateDirectory($dir)
+  $day=(At58-Kst $now).ToString('yyyyMMdd');$path=Join-Path $dir ($channel+'-'+$day+'.jsonl')
+  $json=$entry|ConvertTo-Json -Depth 8 -Compress
+  $bytes=[Text.UTF8Encoding]::new($false).GetBytes($json+[Environment]::NewLine)
+  if($bytes.Length -gt 16384){return}
+  if([IO.File]::Exists($path) -and ([IO.FileInfo]::new($path)).Length+$bytes.Length -gt 2097152){
+   $old=$path+'.1';if([IO.File]::Exists($old)){[IO.File]::Delete($old)};[IO.File]::Move($path,$old)
+  }
+  $stream=[IO.File]::Open($path,[IO.FileMode]::Append,[IO.FileAccess]::Write,[IO.FileShare]::Read)
+  $stream.Write($bytes,0,$bytes.Length);$stream.Dispose();$stream=$null
+  $cutoff=(At58-Kst $now).AddDays(-6).ToString('yyyyMMdd')
+  foreach($file in [IO.Directory]::EnumerateFiles($dir,$channel+'-*.jsonl*')){
+   $name=[IO.Path]::GetFileName($file)
+   if($name -cmatch ('^'+$channel+'-([0-9]{8})\.jsonl(?:\.1)?$') -and $Matches[1] -clt $cutoff){[IO.File]::Delete($file)}
+  }
+ }catch{}finally{if($stream){$stream.Dispose()}}
+}
+function At58ID-ReadState([string]$root,[string]$name){
+ $stream=$null;$reader=$null
+ try{
+  if($name -cnotin @('input-refresh-status.json','input-refresh-success.json')){return $null}
+  $stream=[IO.File]::Open((Join-Path $root $name),[IO.FileMode]::Open,[IO.FileAccess]::Read,([IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete))
+  if($stream.Length -gt 4096){return $null};$reader=[IO.StreamReader]::new($stream);$r=$reader.ReadToEnd()|ConvertFrom-Json
+  # Re-project only our bounded identifiers; never forward arbitrary file contents.
+  if($r.Schema -cne 'AT-INPUT-REFRESH-1' -or $r.AttemptId -cnotmatch '^[a-f0-9]{32}$' -or $r.Stage -cnotmatch '^[A-Z_]{1,32}$' -or $r.Outcome -cnotin @('RUNNING','INPUT_DONE','DONE','FAILED')){return $null}
+  return [pscustomobject]@{AttemptId=$r.AttemptId;Utc=(At58S-Utc $r.Utc).ToString('o');StartedUtc=(At58S-Utc $r.StartedUtc).ToString('o');Stage=$r.Stage;StageUtc=(At58S-Utc $r.StageUtc).ToString('o');Outcome=$r.Outcome;ElapsedMs=[math]::Min(86400000,[math]::Max(0,[long]$r.ElapsedMs));InputSaved=($r.InputSaved -eq $true)}
+ }catch{return $null}finally{if($reader){$reader.Dispose()}elseif($stream){$stream.Dispose()}}
+}
+function At58ID-StartRefresh([string]$root){
+ try{
+  $ctx=@{Root=$root;Id=[guid]::NewGuid().ToString('N');Started=[datetime]::UtcNow;Watch=[Diagnostics.Stopwatch]::StartNew();Stage='START';StageUtc=[datetime]::UtcNow;InputSaved=$false;Failed=$false}
+  At58ID-Refresh $ctx 'START'
+  return $ctx
+ }catch{return $null}
+}
+function At58ID-Refresh($ctx,[string]$stage,$failure=$null){
+ try{
+  if(!$ctx){return};$now=[datetime]::UtcNow
+  if($stage -cnotin @('START','CONFIG','SNAPSHOT','KEY','AUTH','STRUCTURE','JOURNAL_CONTEXT','INPUT_STRUCTURE','FETCH_ROWS','FETCH_SETTINGS','IMPORT_SETTINGS','VALIDATE','PROTECT','WRITE_INPUT','INPUT_DONE','PRESENTATION','JOURNAL','PUBLISH','ASSET_REPORT','DONE','FAILED')){return}
+  if($ctx.Failed){return}
+  $outcome='RUNNING'
+  if($stage -ceq 'FAILED'){$ctx.Failed=$true;$outcome='FAILED'}else{$ctx.Stage=$stage;$ctx.StageUtc=$now}
+  if($stage -ceq 'INPUT_DONE'){$ctx.InputSaved=$true;$outcome='INPUT_DONE'}
+  if($stage -ceq 'DONE'){$outcome='DONE'}
+  $entry=[pscustomobject]@{Schema='AT-INPUT-REFRESH-1';AttemptId=$ctx.Id;Utc=$now.ToString('o');StartedUtc=$ctx.Started.ToString('o');Stage=$ctx.Stage;StageUtc=$ctx.StageUtc.ToString('o');Outcome=$outcome;ElapsedMs=$ctx.Watch.ElapsedMilliseconds;InputSaved=$ctx.InputSaved}
+  if($failure){$entry|Add-Member Error (At58ID-Error $failure)}
+  At58-Atomic (Join-Path $ctx.Root 'input-refresh-status.json') ($entry|ConvertTo-Json -Depth 4 -Compress)
+  if($stage -ceq 'INPUT_DONE'){At58-Atomic (Join-Path $ctx.Root 'input-refresh-success.json') ($entry|ConvertTo-Json -Depth 4 -Compress)}
+  if($stage -cin @('START','INPUT_DONE','DONE','FAILED')){At58ID-Write $ctx.Root 'refresh' $entry $now}
+ }catch{}
+}
+function At58ID-Input($owner,[string]$step,$failure=$null,$raw=$null,$age=$null){
+ try{
+  $now=At58-Now $owner;$previous=At58-Value $owner 'InputDiagnostic'
+  if(!$failure){
+   if(!$previous){return}
+   $entry=[pscustomobject]@{Schema='AT-INPUT-DIAGNOSTIC-1';Utc=$now.ToString('o');RunId=$owner.RunId;Outcome='INPUT_RECOVERED';Step='COMPLETE';PreviousReason=$previous.Reason}
+   At58ID-Write $owner.Root 'read' $entry $now
+   $owner.InputDiagnostic=$null
+   return
+  }
+  $errorInfo=At58ID-Error $failure;$reason=$step
+  if($step -ceq 'READ'){
+   $reason=if($errorInfo.ErrorType -cin @('FileNotFoundException','DirectoryNotFoundException')){'FILE_MISSING'}elseif($errorInfo.ErrorType -ceq 'UnauthorizedAccessException'){'ACCESS_DENIED'}elseif($errorInfo.ErrorType -ceq 'IOException' -and $errorInfo.Win32 -in @(32,33)){'FILE_SHARING'}else{'READ_FAILED'}
+  }
+  if($step -ceq 'AGE'){$reason=if($age -lt -5){'INPUT_FUTURE'}else{'INPUT_EXPIRED'}}
+  if($step -ceq 'ROLLOVER'){$reason=if((At58-Error $failure).Code -ceq 'LIVE_ROLLOVER_WAIT'){'ROLLOVER_WAIT'}else{'INPUT_DAY'}}
+  $inputUtc='';try{if($raw){$inputUtc=(At58S-Utc (At58-Value $raw 'Utc')).ToString('o')}}catch{}
+  $entry=[pscustomobject]@{Schema='AT-INPUT-DIAGNOSTIC-1';Utc=$now.ToString('o');RunId=$owner.RunId;Outcome='FAILED';Step=$step;Reason=$reason;Error=$errorInfo;InputUtc=$inputUtc;InputAgeSeconds=$(if($null -ne $age){[math]::Round([double]$age,3)}else{$null});File=(At58ID-File $owner.Root);Refresh=(At58ID-ReadState $owner.Root 'input-refresh-status.json');LastSuccessfulRefresh=(At58ID-ReadState $owner.Root 'input-refresh-success.json')}
+  $owner.InputDiagnostic=$entry
+  At58ID-Write $owner.Root 'read' $entry $now
+ }catch{}
+}
+
 function At58X-RolloverInput($owner,$source,[datetime]$inputUtc,[datetime]$now){
  # Only verified, fresh input from the immediately preceding date can establish
  # an expected transition. Missing/corrupt input and changed identity still fail.
@@ -4221,18 +4320,27 @@ function At58X-RolloverResult($owner,$result,$snapshot){
 
 function At58X-Input($owner){
 
- try{$raw=(At58-Unprotect ([IO.File]::ReadAllText((Join-Path $owner.Root 'strategy-input.dpapi'))) 'AT58-STRATEGY-INPUT-1')|ConvertFrom-Json}catch{At58-Fail 'LIVE_INPUT_WAIT' 'LIVE_CONTROL'}
+ $step='READ';$diagnosticFailure=$null;$raw=$null;$age=$null
+ try{
+  try{
+   $cipher=[IO.File]::ReadAllText((Join-Path $owner.Root 'strategy-input.dpapi'))
+   $step='DECRYPT';$plain=At58-Unprotect $cipher 'AT58-STRATEGY-INPUT-1'
+   $step='JSON';$raw=$plain|ConvertFrom-Json
+  }catch{$diagnosticFailure=$_;At58-Fail 'LIVE_INPUT_WAIT' 'LIVE_CONTROL'}finally{$cipher=$null;$plain=$null}
+ $step='TIMESTAMP'
 
  $age=((At58-Now $owner)-(At58S-Utc $raw.Utc)).TotalSeconds
 
+ $step='AGE'
  if($age -lt -5 -or $age -gt 120){At58-Fail 'LIVE_INPUT_WAIT' 'LIVE_CONTROL'}
 
- $source=At58S-Import $raw
+ $step='IMPORT';$source=At58S-Import $raw
 
+ $step='IDENTITY'
   if($source.Scope -cne $owner.Scope -or $source.Symbol -cne $owner.Symbol){At58-Fail 'LIVE_SOURCE_IDENTITY' 'LIVE_CONTROL'}
 
 
- $modes=@{}
+ $step='REGIME';$modes=@{}
 
  foreach($i in 17..21){$name=At58S-Cell $raw.Settings $i 0;$mode=At58S-Cell $raw.Settings $i 1
 
@@ -4244,10 +4352,13 @@ function At58X-Input($owner){
 
  if($modes.Count -ne 5){At58-Fail 'LIVE_REGIME' 'LIVE_CONTROL'}
 
+ $step='ROLLOVER'
  At58X-RolloverInput $owner $source (At58S-Utc $raw.Utc) (At58-Now $owner)
 
+ At58ID-Input $owner 'COMPLETE'
  return [pscustomobject]@{Source=$source;Modes=$modes;Utc=$raw.Utc}
 
+ }catch{At58ID-Input $owner $step $(if($diagnosticFailure){$diagnosticFailure}else{$_}) $raw $age;throw}
 }
 
 function At58X-Cycle($owner){
