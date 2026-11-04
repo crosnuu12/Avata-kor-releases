@@ -6,7 +6,15 @@ $ErrorActionPreference='Stop';Set-StrictMode -Version 2
 $script:checks=0
 function Check($ok,[string]$name){if(!$ok){throw ('FAILED: '+$name)};$script:checks++;'PASS '+$name}
 function Reject($body,[string]$code,[string]$name){$found='';try{& $body|Out-Null}catch{$found=$_.Exception.Message};Check ($found -ceq $code) ($name+' ['+$found+']')}
-function Clone($v){At58S-Clone $v}
+function Clone($v){
+ # Test fixtures must preserve nested arrays. PS5.1 JSON round-tripping can
+ # serialize pipeline-wrapped arrays as {value,Count}, unlike a Sheets response.
+ if($null -eq $v){return $null}
+ if($v -is [array]){$copy=[object[]]::new($v.Length);for($i=0;$i -lt $v.Length;$i++){$copy[$i]=Clone $v[$i]};return ,$copy}
+ if($v -is [Collections.IDictionary]){$copy=[ordered]@{};foreach($key in $v.Keys){$copy[$key]=Clone $v[$key]};return [pscustomobject]$copy}
+ if($v -is [pscustomobject]){$copy=[ordered]@{};foreach($p in $v.PSObject.Properties){$copy[$p.Name]=Clone $p.Value};return [pscustomobject]$copy}
+ return $v
+}
 function Baseline-Identity($rows){$lines=@();foreach($row in $rows){$cells=@();foreach($v in $row){$cells+=,[string]$v};$lines+=,($cells -join '|')};return ($lines -join "`n")}
 function Order([string]$key,[string]$id,[string]$day='20261104',[string]$side='매수',[int]$stage=9){[pscustomobject]@{Key=$key;Day=$day;BrokerId=$id;Action='NEW';Intent=[pscustomobject]@{Stage=$stage;Side=$side}}}
 function Fill([string]$name,[string]$order,[decimal]$qty,[decimal]$price,[string]$time,[string]$day='20261104'){[pscustomobject]@{Key=(At58-Hash $name);OrderKey=$order;Account=('a'*64);Day=$day;Time=$time;Qty=$qty;Price=$price;Amount=($qty*$price);Evidence='BROKER_NOTIFICATION_RECONCILED'}}
@@ -120,7 +128,7 @@ if($env:OS -eq 'Windows_NT'){
   $backupPath=Join-Path $realDir 'journal-backup.dpapi'
   Asset-ProtectedWrite $backupPath 'AT58-JOURNAL-BACKUP-1' @{Schema='AT-JOURNAL-BACKUP-1';Rows=$legacy;Formula=(Sheet-JournalFormula $false)}
   $saved=Asset-ProtectedRead $backupPath 'AT58-JOURNAL-BACKUP-1'
-  Check ($saved.Rows.Count -eq $legacy.Count -and $saved.Formula -ceq (Sheet-JournalFormula $false) -and [IO.File]::ReadAllText($backupPath) -notmatch '매수|ATF1') 'Windows encrypted backup round-trips the full original journal'
+  Check ($saved.Rows.Count -eq $legacy.Count -and (Baseline-Identity $saved.Rows) -ceq (Baseline-Identity $legacy) -and (At58S-Cell $saved.Rows 2 6) -ceq $legacy[2][6] -and $saved.Formula -ceq (Sheet-JournalFormula $false) -and [IO.File]::ReadAllText($backupPath) -notmatch '매수|ATF1') 'Windows encrypted backup round-trips the full original journal'
  }finally{if(Test-Path -LiteralPath $realDir){Remove-Item -LiteralPath $realDir -Recurse -Force}}
 }
 # Full sync with synthetic network, baseline import, and encrypted backup writer.

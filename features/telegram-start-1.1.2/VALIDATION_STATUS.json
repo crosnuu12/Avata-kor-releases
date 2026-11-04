@@ -13,6 +13,6 @@
   "ChangedProductionFiles": [
     "bundle/At58.Sheets.ps1"
   ],
-  "PreviousWindowsRun": 41838383729,
-  "PreviousFailure": "Test fixture New-Object object[] produced wrapped array rows on PowerShell 5.1; replaced with native object[] allocation."
+  "PreviousWindowsRun": 41839135185,
+  "PreviousFailure": "PowerShell 5.1 serializes pipeline-wrapped nested arrays as value/Count objects in test JSON cloning; fixture cloning now recursively preserves native arrays. Encrypted backup round-trip checks every original cell."
 }
