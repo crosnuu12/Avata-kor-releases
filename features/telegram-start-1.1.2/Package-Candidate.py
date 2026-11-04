@@ -7,11 +7,11 @@ assert len(files)==12
 bid='bundle-'+hashlib.sha256(json.dumps(files,sort_keys=True).encode()).hexdigest()[:24]
 (r/'bundle/release.json').write_text(json.dumps(dict(Schema='AT58-BUNDLE-1',HostProtocol=2,Mode='CONTROLLED_LIVE',Id=bid,Version='58.17.8',Files=files),separators=(',',':')),encoding='utf-8')
 selected=[p for d in ['bundle','host','recovery','tests'] for p in (r/d).rglob('*') if p.is_file()]
-selected += list(r.glob('Test-*.ps1'))+[r/'Run-Checks.ps1',r/'README.md']
+selected += list(r.glob('Test-*.ps1'))+[r/'Run-Checks.ps1',r/'README.md',r/'README_KO.md',r/'VALIDATION_STATUS.json',r/'Package-Candidate.py']
 out=r/'Avata_1.1.2_Telegram_Verification.zip'
 with zipfile.ZipFile(out,'w',zipfile.ZIP_DEFLATED) as z:
  for p in sorted(selected):
-  rel=p.relative_to(r).as_posix();assert p.suffix.lower() in {'.ps1','.json','.md','.txt'}
+  rel=p.relative_to(r).as_posix();assert p.suffix.lower() in {'.ps1','.json','.md','.txt','.py'}
   assert not any(part.lower() in {'private-signing','credentials','logs'} for part in p.parts)
   assert not p.name.endswith('.dpapi')
   z.write(p,rel)

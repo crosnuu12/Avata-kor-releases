@@ -515,80 +515,132 @@ function Sheet-JournalContext($snapshot,[string]$dataRoot){
  $book=At58T-Load (At58X-Context $owner)
  return (Sheet-JournalCatalog $state $book)
 }
+# The broker ledger remains fill-level. Only the journal presentation is grouped.
 function Sheet-JournalCatalog($state,$book){
  if($state.TestOnly -ne $false -or $book.Mode -cne 'LIVE' -or $state.Scope -cne $book.Scope -or $state.Symbol -cne $book.Symbol){throw 'SHEET_JOURNAL_IDENTITY'}
  $nodes=@{};foreach($o in $book.Orders){if($nodes.ContainsKey($o.Key)){throw 'SHEET_JOURNAL_FILL'};$nodes[$o.Key]=$o}
- $entries=New-Object 'Collections.Generic.List[object]';$keys=@{}
- foreach($f in @($book.Fills|Sort-Object Day,Time,Key)){
+ $entries=New-Object 'Collections.Generic.List[object]';$keys=@{};$groups=@{}
+ # Insertion order is immutable in the broker book. Every cumulative checkpoint
+ # remains verifiable when a later notification is appended (even out of time order).
+ foreach($f in $book.Fills){
   if($f.Key -cnotmatch '^[a-f0-9]{64}$' -or !$nodes.ContainsKey($f.OrderKey) -or $f.Account -cne $book.Account -or $f.Evidence -cne 'BROKER_NOTIFICATION_RECONCILED'){throw 'SHEET_JOURNAL_FILL'}
   $o=$nodes[$f.OrderKey];$stage=[int](At58S-Num $o.Intent.Stage 1 30 $true)
   if($o.Action -ceq 'CANCEL' -or $o.Intent.Side -cnotin @('매수','매도') -or $f.Day -cne $o.Day -or $f.Time -cnotmatch '^\d{6}(\d{3})?$'){throw 'SHEET_JOURNAL_FILL'}
+  $id=At58E-Id $o.BrokerId
   $qty=At58S-Num $f.Qty 1 100000000 $true;$price=At58S-Num $f.Price 0.00001
   if($f.Amount -ne $qty*$price){throw 'SHEET_JOURNAL_FILL'}
-  $time=([string]$f.Time).PadRight(9,'0')
-  try{$stamp=[datetime]::ParseExact(($f.Day+$time),'yyyyMMddHHmmssfff',[Globalization.CultureInfo]::InvariantCulture)}catch{throw 'SHEET_JOURNAL_FILL'}
+  try{$stamp=[datetime]::ParseExact(($f.Day+([string]$f.Time).PadRight(9,'0')),'yyyyMMddHHmmssfff',[Globalization.CultureInfo]::InvariantCulture)}catch{throw 'SHEET_JOURNAL_FILL'}
+  $groupId=At58-Hash (@($book.Scope,$book.Account,$book.Symbol,$f.Day,$id)-join '|')
+  if(!$groups.ContainsKey($groupId)){$groups[$groupId]=[pscustomobject]@{Id=$groupId;OrderKey=$o.Key;BrokerId=$id;Stage=$stage;Side=$o.Intent.Side;Qty=0D;Amount=0D;Date=$stamp.ToOADate();Digest=$groupId;FillKeys=(New-Object 'Collections.Generic.List[string]');Current=$null}}
+  $g=$groups[$groupId]
+  if($g.OrderKey -cne $o.Key -or $g.Stage -ne $stage -or $g.Side -cne $o.Intent.Side){throw 'SHEET_JOURNAL_ORDER_CONFLICT'}
   $key='ATF1-'+$f.Key;if($keys.ContainsKey($key)){throw 'SHEET_JOURNAL_DUPLICATE'}
-  $entry=[pscustomobject]@{Key=$key;Values=[object[]]@($stamp.ToOADate(),$stage,$o.Intent.Side,$price,$qty,[decimal]$f.Amount)}
-  $entries.Add($entry);$keys[$key]=$entry
+  $entry=[pscustomobject]@{Key=$key;GroupId=$groupId;Kind='FILL';Count=1;Values=[object[]]@($stamp.ToOADate(),$stage,$o.Intent.Side,$price,$qty,[decimal]$f.Amount)}
+  $entries.Add($entry);$keys[$key]=$entry;$g.FillKeys.Add($key)
+  $g.Qty+=$qty;$g.Amount+=[decimal]$f.Amount;$g.Date=[math]::Min($g.Date,$stamp.ToOADate());$g.Digest=At58-Hash ($g.Digest+'|'+$f.Key)
+  $groupKey='ATO1-'+$groupId+'-'+$g.Digest
+  $checkpoint=[pscustomobject]@{Key=$groupKey;GroupId=$groupId;Kind='ORDER';Count=$g.FillKeys.Count;Values=[object[]]@($g.Date,$stage,$o.Intent.Side,($g.Amount/$g.Qty),$g.Qty,$g.Amount);BrokerId=$id}
+  $keys[$groupKey]=$checkpoint;$g.Current=$checkpoint
  }
- return [pscustomobject]@{State=$state;Entries=$entries.ToArray();Keys=$keys;Revision=$book.Revision}
+ $fills=@($entries.ToArray()|Sort-Object @{Expression={$_.Values[0]}},Key)
+ $orders=@($groups.Values|ForEach-Object {$_.Current}|Sort-Object @{Expression={$_.Values[0]}},Key)
+ return [pscustomobject]@{State=$state;Entries=$fills;Orders=$orders;Groups=$groups;Keys=$keys;Revision=$book.Revision}
 }
 function Sheet-JournalFilter($rows,$journal){
- $base=New-Object 'Collections.Generic.List[object]';$seen=@{};$used=0
+ $base=New-Object 'Collections.Generic.List[object]';$seen=@{};$covered=@{};$used=0
  $header=At58S-Cell $rows 0 6
  if($header -and $header -cne 'AT 체결키'){throw 'SHEET_JOURNAL_COLUMN'}
+ foreach($col in @(7,8)){$h=[string](At58S-Cell $rows 0 $col);$want=if($col -eq 7){'주문번호'}else{'AT 체결금액'};if($h -and $h -cne $want){throw 'SHEET_JOURNAL_COLUMN'}}
  for($i=0;$i -lt $rows.Count;$i++){
   $row=$rows[$i];$key=[string](At58S-Cell $rows $i 6)
   if(@($row|Where-Object {$null -ne $_ -and [string]$_ -ne ''}).Count){$used=$i+1}
-  if($i -eq 0 -or !$key){$copy=@();for($j=0;$j -lt [math]::Min(6,$row.Count);$j++){$copy+=,$row[$j]};$base.Add([object[]]$copy);continue}
+  if($i -eq 0 -or !$key){
+   if($i -gt 0 -and (([string](At58S-Cell $rows $i 7)) -ne '' -or ([string](At58S-Cell $rows $i 8)) -ne '')){throw 'SHEET_JOURNAL_COLUMN'}
+   $copy=@();for($j=0;$j -lt [math]::Min(6,$row.Count);$j++){$copy+=,$row[$j]};$base.Add([object[]]$copy);continue
+  }
   if(!$journal -or !$journal.Keys.ContainsKey($key)){throw 'SHEET_JOURNAL_UNKNOWN'}
   if($seen.ContainsKey($key)){throw 'SHEET_JOURNAL_DUPLICATE'}
-  $want=$journal.Keys[$key].Values
+  $entry=$journal.Keys[$key];$want=$entry.Values
   if($row.Count -lt 7 -or [string]$row[2] -cne [string]$want[2]){throw 'SHEET_JOURNAL_CHANGED'}
   foreach($j in @(0,1,3,4)){if([math]::Abs((Sheet-Number $row[$j])-[decimal]$want[$j]) -gt .00000001){throw 'SHEET_JOURNAL_CHANGED'}}
   if([string]$row[5] -ne '' -and [math]::Abs((Sheet-Number $row[5])-[decimal]$want[5]) -gt .01){throw 'SHEET_JOURNAL_CHANGED'}
+  if($entry.Kind -ceq 'ORDER'){
+   if([string](At58S-Cell $rows $i 7) -cne $entry.BrokerId -or [string](At58S-Cell $rows $i 8) -eq '' -or (Sheet-Number (At58S-Cell $rows $i 8)) -ne [decimal]$want[5]){throw 'SHEET_JOURNAL_CHANGED'}
+   $members=@($journal.Groups[$entry.GroupId].FillKeys|Select-Object -First $entry.Count)
+  }else{
+   if([string](At58S-Cell $rows $i 7) -ne '' -or [string](At58S-Cell $rows $i 8) -ne ''){throw 'SHEET_JOURNAL_CHANGED'}
+   $members=@($key)
+  }
+  foreach($member in $members){if($covered.ContainsKey($member)){throw 'SHEET_JOURNAL_DUPLICATE'};$covered[$member]=$true}
   $seen[$key]=$i
  }
- return [pscustomobject]@{Rows=$base.ToArray();Seen=$seen;Used=$used}
+ return [pscustomobject]@{Rows=$base.ToArray();Seen=$seen;Covered=$covered;Used=$used}
 }
 function Sheet-JournalLayout($meta){
  $found=@($meta.sheets|Where-Object {$_.properties.title -ceq '매매일지' -and $_.properties.sheetId -eq 1136811970})
  if($found.Count -ne 1){throw 'SHEET_JOURNAL_STRUCTURE'}
  $grid=Ops-Get $found[0].properties 'gridProperties';$rows=[int](Ops-Get $grid 'rowCount' 1000);$cols=[int](Ops-Get $grid 'columnCount' 6)
- if($rows -lt 2 -or $rows -gt 60000 -or $cols -lt 6){throw 'SHEET_JOURNAL_STRUCTURE'}
- return [pscustomobject]@{Rows=$rows;Cols=$cols;Range=("'매매일지'!A1:"+$(if($cols -ge 7){'G'}else{'F'})+$rows)}
+ if($rows -lt 2 -or $rows -gt 60000 -or $cols -lt 6 -or $cols -gt 9){throw 'SHEET_JOURNAL_STRUCTURE'}
+ $last=if($cols -ge 9){'I'}elseif($cols -eq 8){'H'}elseif($cols -eq 7){'G'}else{'F'}
+ return [pscustomobject]@{Rows=$rows;Cols=$cols;Range=("'매매일지'!A1:"+$last+$rows)}
 }
 function Sheet-JournalRead($headers,[string]$base,$layout){
  $uri=$base+'/values/'+[uri]::EscapeDataString($layout.Range)+'?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER'
  $r=Invoke-RestMethod -Method Get -Uri $uri -Headers $headers -TimeoutSec 10 -MaximumRedirection 0 -ErrorAction Stop
  return ,@($r.values)
 }
+function Sheet-JournalFormula([bool]$grouped=$true){
+ if($grouped){return '=ARRAYFORMULA(IF(C2:C="","",IF(I2:I<>"",I2:I,IF((D2:D<>"")*(E2:E<>""),D2:D*E2:E,""))))'}
+ return '=ARRAYFORMULA(IF(C2:C="","",IF((D2:D<>"")*(E2:E<>""),D2:D*E2:E,"")))'
+}
+function Sheet-JournalOrderRow($entry){return ,([object[]]@($entry.Values[0],$entry.Values[1],$entry.Values[2],$entry.Values[3],$entry.Values[4],$entry.Values[5],$entry.Key,$entry.BrokerId,$entry.Values[5]))}
 function Sheet-JournalPlan($journal,$rows,$layout){
- $view=Sheet-JournalFilter $rows $journal
- $missing=@($journal.Entries|Where-Object {!$view.Seen.ContainsKey($_.Key)})
- $requests=New-Object 'Collections.Generic.List[object]'
- if(!$missing.Count){return [pscustomobject]@{Requests=@();Missing=@();Seen=$view.Seen;Count=$journal.Entries.Count;FirstRow=0;LastRow=0}}
- if($missing.Count -gt 200){$missing=@($missing|Select-Object -First 200)}
- $start=$view.Used;$end=$start+$missing.Count;if($start -lt 1 -or $end -gt 60000){throw 'SHEET_JOURNAL_LIMIT'}
- if($layout.Cols -eq 6){
-  $requests.Add(@{appendDimension=@{sheetId=1136811970;dimension='COLUMNS';length=1}})
-  $requests.Add(@{updateCells=@{range=@{sheetId=1136811970;startRowIndex=0;endRowIndex=1;startColumnIndex=6;endColumnIndex=7};rows=@(@{values=@(@{userEnteredValue=@{stringValue='AT 체결키'}})});fields='userEnteredValue'}})
-  $requests.Add(@{updateDimensionProperties=@{range=@{sheetId=1136811970;dimension='COLUMNS';startIndex=6;endIndex=7};properties=@{hiddenByUser=$true};fields='hiddenByUser'}})
- }elseif((At58S-Cell $rows 0 6) -cne 'AT 체결키'){throw 'SHEET_JOURNAL_COLUMN'}
- if($end -gt $layout.Rows){$requests.Add(@{appendDimension=@{sheetId=1136811970;dimension='ROWS';length=($end-$layout.Rows)}})}
- $requests.Add(@{copyPaste=@{source=@{sheetId=1136811970;startRowIndex=1;endRowIndex=2;startColumnIndex=0;endColumnIndex=6};destination=@{sheetId=1136811970;startRowIndex=$start;endRowIndex=$end;startColumnIndex=0;endColumnIndex=6};pasteType='PASTE_FORMAT';pasteOrientation='NORMAL'}})
- $values=New-Object 'Collections.Generic.List[object]';$ids=New-Object 'Collections.Generic.List[object]'
- foreach($entry in $missing){
-  $cells=New-Object 'Collections.Generic.List[object]'
-  for($i=0;$i -lt 5;$i++){$v=$entry.Values[$i];$cells.Add(@{userEnteredValue=$(if($i -eq 2){@{stringValue=[string]$v}}else{@{numberValue=[double]$v}})})}
-  $values.Add(@{values=$cells.ToArray()});$ids.Add(@{values=@(@{userEnteredValue=@{stringValue=$entry.Key}})})
+ $view=Sheet-JournalFilter $rows $journal;$requests=New-Object 'Collections.Generic.List[object]'
+ $out=New-Object 'Collections.Generic.List[object]';$removed=New-Object 'Collections.Generic.List[int]';$updates=New-Object 'Collections.Generic.List[object]';$placed=@{}
+ $schema=($layout.Cols -ge 9 -and (At58S-Cell $rows 0 7) -ceq '주문번호' -and (At58S-Cell $rows 0 8) -ceq 'AT 체결금액')
+ for($i=0;$i -lt $view.Used;$i++){
+  $key=[string](At58S-Cell $rows $i 6)
+  if($i -eq 0 -or !$key){$out.Add([object[]]$rows[$i]);continue}
+  $entry=$journal.Keys[$key];$g=$journal.Groups[$entry.GroupId]
+  if($placed.ContainsKey($g.Id)){$removed.Add($i);continue}
+  $target=$out.Count;$placed[$g.Id]=$true;$out.Add((Sheet-JournalOrderRow $g.Current))
+  if($key -cne $g.Current.Key -or !$schema){$updates.Add([pscustomobject]@{Index=$target;Entry=$g.Current;New=$false})}
  }
- $requests.Add(@{updateCells=@{range=@{sheetId=1136811970;startRowIndex=$start;endRowIndex=$end;startColumnIndex=0;endColumnIndex=5};rows=$values.ToArray();fields='userEnteredValue'}})
- $requests.Add(@{updateCells=@{range=@{sheetId=1136811970;startRowIndex=$start;endRowIndex=$end;startColumnIndex=6;endColumnIndex=7};rows=$ids.ToArray();fields='userEnteredValue'}})
- $dateRows=New-Object 'Collections.Generic.List[object]';for($i=0;$i -lt $start;$i++){$dateRows.Add([object[]]$rows[$i])};foreach($entry in $missing){$dateRows.Add([object[]]$entry.Values)}
- foreach($request in (Sheet-JournalDateFormats $dateRows.ToArray() $start $end)){$requests.Add($request)}
- $requests.Add(@{updateDimensionProperties=@{range=@{sheetId=1136811970;dimension='COLUMNS';startIndex=0;endIndex=1};properties=@{pixelSize=160};fields='pixelSize'}})
- return [pscustomobject]@{Requests=$requests.ToArray();Missing=$missing;Seen=$view.Seen;Count=$journal.Entries.Count;FirstRow=($start+1);LastRow=$end}
+ $missing=@($journal.Orders|Where-Object {!$placed.ContainsKey($_.GroupId)})
+ foreach($entry in $missing){$updates.Add([pscustomobject]@{Index=$out.Count;Entry=$entry;New=$true});$out.Add((Sheet-JournalOrderRow $entry))}
+ if($out.Count -gt 60000 -or !$out.Count){throw 'SHEET_JOURNAL_LIMIT'}
+ if(!$schema -and !$journal.Orders.Count){return [pscustomobject]@{Requests=@();Missing=@();Seen=$view.Seen;Count=0;FirstRow=0;LastRow=$view.Used;Rows=$rows;Deleted=0;Updated=0;SchemaChange=$false}}
+ if($layout.Cols -lt 9){$requests.Add(@{appendDimension=@{sheetId=1136811970;dimension='COLUMNS';length=(9-$layout.Cols)}})}
+ # Delete only verified automatic duplicate rows, descending so indices stay valid.
+ foreach($i in @($removed.ToArray()|Sort-Object -Descending)){$requests.Add(@{deleteDimension=@{range=@{sheetId=1136811970;dimension='ROWS';startIndex=$i;endIndex=($i+1)}}})}
+ $gridRows=$layout.Rows-$removed.Count
+ if($out.Count -gt $gridRows){$requests.Add(@{appendDimension=@{sheetId=1136811970;dimension='ROWS';length=($out.Count-$gridRows)}})}
+ if(!$schema){
+  $requests.Add(@{updateCells=@{start=@{sheetId=1136811970;rowIndex=0;columnIndex=6};rows=@(@{values=@(@{userEnteredValue=@{stringValue='AT 체결키'}},@{userEnteredValue=@{stringValue='주문번호'}},@{userEnteredValue=@{stringValue='AT 체결금액'}})});fields='userEnteredValue'}})
+  $requests.Add(@{updateCells=@{start=@{sheetId=1136811970;rowIndex=1;columnIndex=5};rows=@(@{values=@(@{userEnteredValue=@{formulaValue=(Sheet-JournalFormula)}})});fields='userEnteredValue'}})
+  foreach($col in @(6,8)){$requests.Add(@{updateDimensionProperties=@{range=@{sheetId=1136811970;dimension='COLUMNS';startIndex=$col;endIndex=($col+1)};properties=@{hiddenByUser=$true};fields='hiddenByUser'}})}
+  $requests.Add(@{updateDimensionProperties=@{range=@{sheetId=1136811970;dimension='COLUMNS';startIndex=7;endIndex=8};properties=@{hiddenByUser=$false;pixelSize=105};fields='hiddenByUser,pixelSize'}})
+  $requests.Add(@{repeatCell=@{range=@{sheetId=1136811970;startRowIndex=0;endRowIndex=1;startColumnIndex=7;endColumnIndex=8};cell=@{userEnteredFormat=@{textFormat=@{bold=$true};wrapStrategy='WRAP'}};fields='userEnteredFormat.textFormat.bold,userEnteredFormat.wrapStrategy'}})
+  $requests.Add(@{updateCells=@{start=@{sheetId=1136811970;rowIndex=0;columnIndex=3};rows=@(@{values=@(@{note='같은 날짜·주문번호의 체결금액 합계 ÷ 체결수량 합계. 분할 체결은 수량가중 평균단가이며, 체결금액은 원본 합계를 사용합니다.'})});fields='note'}})
+ }
+ foreach($change in $updates){
+  $i=$change.Index;$entry=$change.Entry
+  if($change.New){$requests.Add(@{copyPaste=@{source=@{sheetId=1136811970;startRowIndex=1;endRowIndex=2;startColumnIndex=0;endColumnIndex=6};destination=@{sheetId=1136811970;startRowIndex=$i;endRowIndex=($i+1);startColumnIndex=0;endColumnIndex=6};pasteType='PASTE_FORMAT';pasteOrientation='NORMAL'}})}
+  $cells=New-Object 'Collections.Generic.List[object]'
+  for($j=0;$j -lt 5;$j++){$cells.Add(@{userEnteredValue=$(if($j -eq 2){@{stringValue=[string]$entry.Values[$j]}}else{@{numberValue=[double]$entry.Values[$j]}})})}
+  $requests.Add(@{updateCells=@{start=@{sheetId=1136811970;rowIndex=$i;columnIndex=0};rows=@(@{values=$cells.ToArray()});fields='userEnteredValue'}})
+  $requests.Add(@{updateCells=@{start=@{sheetId=1136811970;rowIndex=$i;columnIndex=6};rows=@(@{values=@(@{userEnteredValue=@{stringValue=$entry.Key}},@{userEnteredValue=@{stringValue=$entry.BrokerId}},@{userEnteredValue=@{numberValue=[double]$entry.Values[5]}})});fields='userEnteredValue'}})
+  $requests.Add(@{repeatCell=@{range=@{sheetId=1136811970;startRowIndex=$i;endRowIndex=($i+1);startColumnIndex=3;endColumnIndex=4};cell=@{userEnteredFormat=@{numberFormat=@{type='NUMBER';pattern='#,##0.####'}}};fields='userEnteredFormat.numberFormat'}})
+ }
+ if($requests.Count){foreach($r in (Sheet-JournalDateFormats $out.ToArray() 1 $out.Count)){$requests.Add($r)}}
+ return [pscustomobject]@{Requests=$requests.ToArray();Missing=$missing;Seen=$view.Seen;Count=$journal.Orders.Count;FirstRow=2;LastRow=$out.Count;Rows=$out.ToArray();Deleted=$removed.Count;Updated=$updates.Count;SchemaChange=(!$schema)}
+}
+function Sheet-JournalDetailedRows($rows,$journal){
+ $view=Sheet-JournalFilter $rows $journal;$all=New-Object 'Collections.Generic.List[object]'
+ for($i=1;$i -lt $view.Rows.Count;$i++){$r=$view.Rows[$i];if([string](At58S-Cell $view.Rows $i 0) -ne ''){$all.Add([pscustomobject]@{Date=(Sheet-Number $r[0]);Sequence=$i;Values=$r})}}
+ $n=$view.Rows.Count;foreach($entry in $journal.Entries){$all.Add([pscustomobject]@{Date=[decimal]$entry.Values[0];Sequence=$n;Values=$entry.Values});$n++}
+ $result=New-Object 'Collections.Generic.List[object]';$result.Add([object[]]$view.Rows[0]);foreach($v in @($all.ToArray()|Sort-Object Date,Sequence)){$result.Add([object[]]$v.Values)}
+ return ,$result.ToArray()
 }
 function Sheet-JournalSync($headers,[string]$base,$meta,$journalInput,$journal,[string]$outputRoot){
  $mutex=[Threading.Mutex]::new($false,('Local\AT58Journal_'+(Ops-Key ($script:At58SheetId+'|'+$outputRoot))));$held=$false
@@ -596,27 +648,39 @@ function Sheet-JournalSync($headers,[string]$base,$meta,$journalInput,$journal,[
   try{$held=$mutex.WaitOne(0)}catch [Threading.AbandonedMutexException]{$held=$true};if(!$held){throw 'SHEET_JOURNAL_BUSY'}
   if($journalInput.Source.Hash -cne $journal.State.SourceHash){throw 'SHEET_JOURNAL_SOURCE_CHANGED'}
   $layout=Sheet-JournalLayout $meta;$plan=Sheet-JournalPlan $journal $journalInput.Ledger $layout;$lastRows=$journalInput.Ledger
-  if($plan.Missing.Count){
+  if($plan.Requests.Count){
+   # A presentation schema must not change while an update is still being verified.
+   $hostState=Ops-ReadJson (Join-Path $outputRoot 'bundle-status.json')
+   if(!$hostState -or $hostState.Version -cne '58.17.8' -or $hostState.State -cnotin @('CURRENT','DISABLED','REJECTED','LIVE_HOLD','UPDATE_WAITING')){throw 'SHEET_JOURNAL_UPDATE_WAIT'}
    $rows=Sheet-JournalRead $headers $base $layout;$lastRows=$rows
    $raw=At58S-Clone $journalInput.Raw;$raw.Ledger=(Sheet-JournalFilter $rows $journal).Rows
    if((At58S-Import $raw).Hash -cne $journal.State.SourceHash){throw 'SHEET_JOURNAL_SOURCE_CHANGED'}
    $plan=Sheet-JournalPlan $journal $rows $layout
-   if($plan.Missing.Count){
+   if($plan.Requests.Count){
     $formula=Invoke-RestMethod -Method Get -Uri ($base+'/values/'+[uri]::EscapeDataString("'매매일지'!F2")+'?valueRenderOption=FORMULA') -Headers $headers -TimeoutSec 10 -MaximumRedirection 0 -ErrorAction Stop
-    if((At58S-Cell $formula.values 0 0) -cne '=ARRAYFORMULA(IF(C2:C="","",IF((D2:D<>"")*(E2:E<>""),D2:D*E2:E,"")))'){throw 'SHEET_JOURNAL_FORMULA'}
+    $wantFormula=Sheet-JournalFormula (!$plan.SchemaChange)
+    if((At58S-Cell $formula.values 0 0) -cne $wantFormula){throw 'SHEET_JOURNAL_FORMULA'}
+    # Keep the original first migration and the most recent pre-write snapshot encrypted.
+    $backup=@{Schema='AT-JOURNAL-BACKUP-1';SheetId=$script:At58SheetId;Scope=$journal.State.Scope;SourceHash=$journal.State.SourceHash;Utc=(Ops-Now).ToString('o');Revision=$journal.Revision;Rows=$rows;Formula=$wantFormula}
+    $first=Join-Path $outputRoot 'journal-before-grouping.dpapi'
+    if($plan.SchemaChange -and !(Test-Path -LiteralPath $first)){Asset-ProtectedWrite $first 'AT58-JOURNAL-BACKUP-1' $backup}
+    Asset-ProtectedWrite (Join-Path $outputRoot 'journal-before-write.dpapi') 'AT58-JOURNAL-BACKUP-1' $backup
     $reply=Invoke-RestMethod -Method Post -Uri ($base+':batchUpdate') -Headers $headers -ContentType 'application/json; charset=utf-8' -Body ([Text.Encoding]::UTF8.GetBytes((@{requests=$plan.Requests}|ConvertTo-Json -Depth 18 -Compress))) -TimeoutSec 10 -MaximumRedirection 0 -ErrorAction Stop
     if($reply.spreadsheetId -cne $script:At58SheetId){throw 'SHEET_JOURNAL_RESPONSE'}
-    $layout.Cols=[math]::Max(7,$layout.Cols);$layout.Rows=[math]::Max($layout.Rows,$plan.LastRow);$layout.Range="'매매일지'!A1:G"+$layout.Rows
-    $written=Sheet-JournalRead $headers $base $layout;$lastRows=$written;$verified=Sheet-JournalFilter $written $journal
-    foreach($entry in $plan.Missing){
-     if(!$verified.Seen.ContainsKey($entry.Key)){throw 'SHEET_JOURNAL_VERIFY'}
-     $row=$written[$verified.Seen[$entry.Key]];if([string]$row[5] -eq '' -or [math]::Abs((Sheet-Number $row[5])-[decimal]$entry.Values[5]) -gt .01){throw 'SHEET_JOURNAL_RECALC'}
-    }
-    $plan.Seen=$verified.Seen
+    $layout.Cols=[math]::Max(9,$layout.Cols);$layout.Rows=[math]::Max($layout.Rows-$plan.Deleted,$plan.LastRow);$layout.Range="'매매일지'!A1:I"+$layout.Rows
+    $lastRows=Sheet-JournalRead $headers $base $layout
    }
   }
-  foreach($key in $plan.Seen.Keys){$amount=At58S-Cell $lastRows $plan.Seen[$key] 5;if([string]$amount -eq '' -or [math]::Abs((Sheet-Number $amount)-[decimal]$journal.Keys[$key].Values[5]) -gt .01){throw 'SHEET_JOURNAL_RECALC'}}
-  $result=@{Code='OK';Utc=(Ops-Now).ToString('o');Total=$journal.Entries.Count;Written=$plan.Seen.Count;Pending=($journal.Entries.Count-$plan.Seen.Count);Added=$plan.Missing.Count}
+  $verified=Sheet-JournalFilter $lastRows $journal
+  foreach($entry in $journal.Orders){
+   if(!$verified.Seen.ContainsKey($entry.Key)){throw 'SHEET_JOURNAL_VERIFY'}
+   $amount=At58S-Cell $lastRows $verified.Seen[$entry.Key] 5
+   if([string]$amount -eq '' -or [math]::Abs((Sheet-Number $amount)-[decimal]$entry.Values[5]) -gt .01){throw 'SHEET_JOURNAL_RECALC'}
+  }
+  $raw=At58S-Clone $journalInput.Raw;$raw.Ledger=$verified.Rows
+  if((At58S-Import $raw).Hash -cne $journal.State.SourceHash){throw 'SHEET_JOURNAL_SOURCE_CHANGED'}
+  $journalInput.Ledger=Sheet-JournalDetailedRows $lastRows $journal
+  $result=@{Code='OK';Utc=(Ops-Now).ToString('o');Total=$journal.Orders.Count;Written=$journal.Orders.Count;Pending=0;Added=$plan.Missing.Count;Updated=$plan.Updated;GroupedRowsRemoved=$plan.Deleted;FillCount=$journal.Entries.Count}
   Ops-WriteJson (Join-Path $outputRoot 'journal-status.json') $result
   return [pscustomobject]$result
  }finally{if($held){$mutex.ReleaseMutex()};$mutex.Dispose()}

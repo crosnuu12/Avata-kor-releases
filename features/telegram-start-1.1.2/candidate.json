@@ -2,10 +2,10 @@
   "Status": "UNPUBLISHED_CANDIDATE",
   "ProductVersion": "1.1.2",
   "InternalVersion": "58.17.8",
-  "Id": "bundle-ac8f88f41895f5ffa30da5a6",
-  "ManifestHash": "f52bb334b3592bf8cc1140bff3c12540e582d30e29721bcc9efe413fd5c503e0",
-  "ArchiveSHA256": "ff9312549faf63a2079e48904377ebbd9566f8f67c429b347ced5705c7265234",
-  "ArchiveBytes": 481193,
+  "Id": "bundle-5d6e0eb02f86ac466df09cea",
+  "ManifestHash": "062c855b611296d1a5d5998a836422c8bdf6f824ccf6cbfb3abc4c040693ca8e",
+  "ArchiveSHA256": "fcc99f7abed657d7ba6c59c753849b352c3845404931191b2812823ea457507f",
+  "ArchiveBytes": 493192,
   "NetworkTests": "synthetic only",
   "LiveInstalled": false
 }

@@ -1,0 +1,18 @@
+{
+  "Status": "WINDOWS_REVERIFICATION_PENDING",
+  "BaseCommit": "1ef7010c908db30581bc3b126b538e06ae132cca",
+  "PortableEngine": "PowerShell 7.4.6",
+  "PortableChecksPassed": 55,
+  "ScriptsParsed": 63,
+  "WindowsChecksPlanned": 532,
+  "WindowsChecksRunForThisCandidate": false,
+  "LiveInstalled": false,
+  "LiveSheetChanged": false,
+  "GitHubUpdated": true,
+  "Publication": "SOURCE_PUBLICATION_AUTHORIZED",
+  "ChangedProductionFiles": [
+    "bundle/At58.Sheets.ps1"
+  ],
+  "PreviousWindowsRun": 41838383729,
+  "PreviousFailure": "Test fixture New-Object object[] produced wrapped array rows on PowerShell 5.1; replaced with native object[] allocation."
+}

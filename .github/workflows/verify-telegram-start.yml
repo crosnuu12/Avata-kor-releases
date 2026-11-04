@@ -1,4 +1,4 @@
-name: Verify Avata Telegram start and input diagnostics (no deployment)
+name: Verify Avata 1.1.2 journal, Telegram and diagnostics (no deployment)
 on:
   push:
     branches: ['prepare/1.1.2-telegram-start']
@@ -39,4 +39,4 @@ jobs:
           if($LASTEXITCODE -ne 0){throw 'TRAY_FAILED'}
           & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Test-DesktopStartup.ps1')
           if($LASTEXITCODE -ne 0){throw 'DESKTOP_FAILED'}
-          Write-Output 'TELEGRAM AND INPUT DIAGNOSTICS CANDIDATE VERIFIED: 475 checks. No deployment, actual credentials, Telegram messages or broker orders.'
+          Write-Output 'JOURNAL, TELEGRAM AND DIAGNOSTICS CANDIDATE VERIFIED: 532 checks. No deployment, actual credentials, Telegram messages or broker orders.'
