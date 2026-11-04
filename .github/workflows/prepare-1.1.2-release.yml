@@ -1,0 +1,37 @@
+name: Verify Avata 1.1.2 release packaging
+on:
+  push:
+    branches: ['prepare/1.1.2-telegram-start']
+    paths: ['releases/1.1.2/**', '.github/workflows/prepare-1.1.2-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify-package:
+    runs-on: windows-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Verify source validation and release packaging
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference='Stop'
+          $run=gh api "repos/$env:GITHUB_REPOSITORY/actions/runs/41840405969" | ConvertFrom-Json
+          if($LASTEXITCODE -ne 0 -or $run.head_sha -cne 'cd8576d58bc897fb1174186df0830daadc9c7fd1' -or $run.conclusion -cne 'success' -or $run.status -cne 'completed'){throw 'SOURCE_NOT_VERIFIED'}
+          python -m pip install --disable-pip-version-check cryptography==50.0.2
+          if($LASTEXITCODE -ne 0){throw 'DEPENDENCY_FAILED'}
+          $candidate=Join-Path $env:GITHUB_WORKSPACE 'features/telegram-start-1.1.2/Avata_1.1.2_Telegram_Verification.zip'
+          python releases/1.1.2/test_package_release.py $candidate
+          if($LASTEXITCODE -ne 0){throw 'PACKAGER_TESTS_FAILED'}
+          $assets=Join-Path $env:RUNNER_TEMP 'avata-prepared-assets'
+          python releases/1.1.2/package_release.py --candidate $candidate --output $assets
+          if($LASTEXITCODE -ne 0){throw 'PACKAGING_FAILED'}
+          $kit=Join-Path $env:RUNNER_TEMP 'avata-prepared-kit'
+          Expand-Archive -LiteralPath $candidate -DestinationPath $kit
+          & releases/1.1.2/Verify-Package.ps1 -Kit $kit -Assets $assets
+          Write-Output 'RELEASE PACKAGING VERIFIED. Unsigned preparation only; no deployment.'
