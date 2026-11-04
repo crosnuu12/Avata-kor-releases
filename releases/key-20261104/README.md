@@ -2,7 +2,7 @@
 
 The original signing private key could not be located. The owner explicitly authorized a new key and a one-time manual trust change. A new RSA-3072 key signs the exact previously validated 1.1.2 runtime bundle; the application bundle itself is unchanged.
 
-Private key backup: `Avata_Private_Signing_Key_Backup_20261104.zip`, stored separately in the owner's private files. Its PEM is unencrypted and must be kept private. It is never committed, included in a release, installed on a trading PC or passed to GitHub Actions. Future signing must reuse this backup. Public-key SHA-256: `70c8289ed2e4727725e36c9016e201f287e8f9665fa8ea520f2df4e149a334ac`.
+Public-key SHA-256: `70c8289ed2e4727725e36c9016e201f287e8f9665fa8ea520f2df4e149a334ac`. Release assets contain only public verification material.
 
 `build_public_release.py` signs locally with the private key file and rejects a different key. Public pre-signed assets are then verified and published by Actions without access to the private key. The pinned original source archive remains unchanged and retains its historical validation results (532 Windows checks).
 

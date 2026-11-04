@@ -1,13 +1,11 @@
-# Avata 1.1.2 automatic-update preparation
+# Avata 1.1.2 automatic update — published
 
-The exact application candidate passed 532 Windows PowerShell 5.1 checks in [run 41840405969](https://github.com/crosnuu12/Avata-kor-releases/actions/runs/41840405969), commit `cd8576d58bc897fb1174186df0830daadc9c7fd1`.
+Published on 2026-11-04 as [v1.1.2](https://github.com/crosnuu12/Avata-kor-releases/releases/tag/v1.1.2), internal build 58.17.8. [Publication run 41846886818](https://github.com/crosnuu12/Avata-kor-releases/actions/runs/41846886818) passed public versioned and latest-feed download, signature, package hash and manifest validation.
 
-Candidate SHA-256: `82d52ac404ca2929c718ccc0a5015790f5e09252b3bdbd9d68f6532d4d7b7f32`.
+The exact application candidate passed 532 Windows PowerShell 5.1 checks in [run 41840405969](https://github.com/crosnuu12/Avata-kor-releases/actions/runs/41840405969). Candidate SHA-256: `82d52ac404ca2929c718ccc0a5015790f5e09252b3bdbd9d68f6532d4d7b7f32`.
 
-The packaging script uses only the verified bundle's 12 allowlisted scripts and its manifest. Its unsigned preparation output is not an update feed and must not be installed manually. The publishing workflow requires the original 3072-bit RSA private key matching the public key already pinned by installed applications. A new or unrelated key is rejected; signature validation is never disabled.
+Existing PCs require the owner-authorized one-time public-key recovery. Fully close Avata, extract `Avata_Update_Key_Recovery_1.1.2.zip`, run `Apply_New_Update_Key.cmd`, then relaunch the existing shortcut. Old installations reject the new signature until recovery is applied. Public-key SHA-256: `70c8289ed2e4727725e36c9016e201f287e8f9665fa8ea520f2df4e149a334ac`.
 
-For publication, the existing private key must be provided to the repository's `AVATA_UPDATE_SIGNING_KEY` Actions secret (RSA XML or PEM). An encrypted PEM may use `AVATA_UPDATE_SIGNING_PASSWORD`. Do not commit either value or paste it into an issue/PR. The private key remains available only to the signing step and is never included in uploaded artifacts.
+Recovery passed 33 Windows checks in [run 41846556672](https://github.com/crosnuu12/Avata-kor-releases/actions/runs/41846556672): exact updater variants, atomic backup of the old updater, rollback, file locks, tampering and preservation of synthetic user data. No real installed PC, broker order or live spreadsheet was accessed.
 
-After the key is available, run `Publish Avata 1.1.2 automatic update` on `main`. The workflow checks the successful source validation, verifies the signed package with the original updater, publishes the versioned download, verifies it over HTTPS, and only then promotes the product release to the automatic-update channel. It verifies the latest feed again after promotion. Existing published release assets are never overwritten.
-
-Current deployment is blocked on the original signing key; the latest public automatic-update feed remains 1.1.1. Source publication and automatic-update publication are separate steps.
+The release implementation is in `releases/key-20261104/` and `.github/workflows/rotate-update-key.yml`. This supersedes the original-key preparation in this directory and the old `publish-58.17.8.yml` workflow.
