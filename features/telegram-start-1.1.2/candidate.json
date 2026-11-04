@@ -1,0 +1,11 @@
+{
+  "Status": "UNPUBLISHED_CANDIDATE",
+  "ProductVersion": "1.1.2",
+  "InternalVersion": "58.17.8",
+  "Id": "bundle-7c3371e4fbebcd77e35a86c6",
+  "ManifestHash": "edc465d2acd5015a2a948c26b548481e933a21f11d909d5e2fe6abe7bea230e7",
+  "ArchiveSHA256": "0559044848bc6206310a0795ed6fc278657f57d6719ec08ad586f08dc09634c3",
+  "ArchiveBytes": 473676,
+  "NetworkTests": "synthetic only",
+  "LiveInstalled": false
+}
