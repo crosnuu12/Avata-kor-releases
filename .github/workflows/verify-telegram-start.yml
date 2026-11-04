@@ -1,0 +1,42 @@
+name: Verify Avata 1.1.2 journal, Telegram and diagnostics (no deployment)
+on:
+  push:
+    branches: ['prepare/1.1.2-telegram-start']
+    paths:
+      - '.github/workflows/verify-telegram-start.yml'
+      - 'features/telegram-start-1.1.2/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: windows-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Verify isolated candidate and UI behavior
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          $source=Join-Path $env:GITHUB_WORKSPACE 'features/telegram-start-1.1.2'
+          $meta=Get-Content -LiteralPath (Join-Path $source 'candidate.json') -Raw | ConvertFrom-Json
+          $archive=Join-Path $source 'Avata_1.1.2_Telegram_Verification.zip'
+          if((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant() -cne $meta.ArchiveSHA256){throw 'CANDIDATE_HASH'}
+          $kit=Join-Path $env:RUNNER_TEMP 'avata-telegram-candidate'
+          Expand-Archive -LiteralPath $archive -DestinationPath $kit
+          foreach($name in @('At58.Telegram.ps1','At58.Manager.ps1','At58.Sheets.ps1','At58.SheetWorker.ps1','payload/At58.Core.ps1','payload/esbada_Merits_AT_v58.ps1')){
+            if((Get-FileHash -LiteralPath (Join-Path $source ('source/'+$name))).Hash -cne (Get-FileHash -LiteralPath (Join-Path $kit ('bundle/'+$name))).Hash){throw 'REVIEW_SOURCE_MISMATCH'}
+          }
+          . (Join-Path $kit 'host/At58.Ops.ps1')
+          . (Join-Path $kit 'host/At58.Update.ps1')
+          $manifest=Up-Validate (Join-Path $kit 'bundle') $meta.ManifestHash
+          if($manifest.Version -cne '58.17.8' -or $manifest.Id -cne $meta.Id){throw 'CANDIDATE_IDENTITY'}
+          & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Run-Checks.ps1')
+          if($LASTEXITCODE -ne 0){throw 'REGRESSION_FAILED'}
+          & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Test-TrayRestore.ps1') -HostedRunner
+          if($LASTEXITCODE -ne 0){throw 'TRAY_FAILED'}
+          & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Test-DesktopStartup.ps1')
+          if($LASTEXITCODE -ne 0){throw 'DESKTOP_FAILED'}
+          Write-Output 'JOURNAL, TELEGRAM AND DIAGNOSTICS CANDIDATE VERIFIED: 532 checks. No deployment, actual credentials, Telegram messages or broker orders.'

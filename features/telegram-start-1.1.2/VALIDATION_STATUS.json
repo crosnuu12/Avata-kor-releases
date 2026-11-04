@@ -1,0 +1,18 @@
+{
+  "Status": "WINDOWS_REVERIFICATION_PENDING",
+  "BaseCommit": "1ef7010c908db30581bc3b126b538e06ae132cca",
+  "PortableEngine": "PowerShell 7.4.6",
+  "PortableChecksPassed": 55,
+  "ScriptsParsed": 63,
+  "WindowsChecksPlanned": 532,
+  "WindowsChecksRunForThisCandidate": false,
+  "LiveInstalled": false,
+  "LiveSheetChanged": false,
+  "GitHubUpdated": true,
+  "Publication": "SOURCE_PUBLICATION_AUTHORIZED",
+  "ChangedProductionFiles": [
+    "bundle/At58.Sheets.ps1"
+  ],
+  "PreviousWindowsRun": 41839135185,
+  "PreviousFailure": "PowerShell 5.1 serializes pipeline-wrapped nested arrays as value/Count objects in test JSON cloning; fixture cloning now recursively preserves native arrays. Encrypted backup round-trip checks every original cell."
+}
