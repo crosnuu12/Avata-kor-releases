@@ -1,0 +1,8 @@
+{
+  "Schema": "AVATA-PUBLISHER-KEY-1",
+  "KeyId": "avata-update-20261104",
+  "Algorithm": "RSA-3072-PKCS1v15-SHA256",
+  "PublicKeySha256": "70c8289ed2e4727725e36c9016e201f287e8f9665fa8ea520f2df4e149a334ac",
+  "CreatedUtc": "2026-11-04T14:13:19.312640+00:00",
+  "Purpose": "Avata update publisher signing; replaces unavailable original key by explicit user-approved manual trust recovery."
+}
