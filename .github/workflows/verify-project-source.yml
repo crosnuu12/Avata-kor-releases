@@ -1,0 +1,25 @@
+name: Verify current source retrieval
+on:
+  push:
+    branches: [prepare/project-index-20261105, main]
+    paths:
+      - 'tools/**'
+      - 'CURRENT_SOURCE.json'
+      - '.github/workflows/verify-project-source.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Test and restore pinned complete source
+        shell: powershell
+        run: |
+          python tools/Test-Prepare-Source.py
+          if($LASTEXITCODE -ne 0){throw 'SOURCE_TEST_FAILED'}
+          python tools/Prepare-Source.py --dest (Join-Path $env:RUNNER_TEMP 'avata-source-restore')
+          if($LASTEXITCODE -ne 0){throw 'SOURCE_RESTORE_FAILED'}

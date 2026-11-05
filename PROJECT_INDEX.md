@@ -1,0 +1,40 @@
+# Avata 프로젝트 길잡이
+
+이 저장소의 작업 시작점입니다. 운영은 메인PC 기준이며, 거래 원장과 인증정보는 사용자 PC에 있습니다. 공개 저장소에는 소스·검증 자료·서명된 배포파일만 보관합니다.
+
+## 먼저 확인할 것
+
+1. [최신 공개 릴리스](https://github.com/crosnuu12/Avata-kor-releases/releases/latest)의 버전과 해당 릴리스의 `STATUS.md`를 확인합니다.
+2. 실제 설치 버전은 메인PC 진단의 `BundleVersion`·`active.json`으로 확인합니다. 최신 릴리스 공개만으로 설치 완료를 판단하지 않습니다.
+3. 소스를 수정하려면 [CURRENT_SOURCE.json](CURRENT_SOURCE.json)에 고정한 **Verification ZIP 전체**를 검증해 별도 작업 폴더로 복원합니다. `releases/<제품버전>/source/`는 일부 릴리스에서 변경 파일만 담은 열람용 발췌본입니다.
+
+```powershell
+python .\tools\Prepare-Source.py --dest ..\avata-work-1.1.6
+```
+
+Python 3.9 이상이 필요합니다. 대상 폴더의 상위 폴더는 미리 존재해야 하며, 대상은 저장소 밖의 새 폴더여야 합니다. 도구는 내려받기나 실행 없이 고정된 ZIP·manifest·런타임 파일의 SHA256과 경로를 확인하고 전체 소스를 복원합니다. 기존 폴더는 덮어쓰지 않습니다. 신뢰한 저장소 인덱스에 대한 무결성 검사이며, 자동 업데이트의 서명 검증을 대체하지 않습니다.
+
+| 찾는 내용 | 위치 |
+| --- | --- |
+| 현재 개발 기준의 버전·ZIP·해시 | [CURRENT_SOURCE.json](CURRENT_SOURCE.json) |
+| 전체 소스 복원과 도구 자체 검증 | [Prepare-Source.py](tools/Prepare-Source.py), [Test-Prepare-Source.py](tools/Test-Prepare-Source.py) |
+| 모듈별 역할, 거래·시트·알림 데이터 흐름 | [구조 안내](docs/ARCHITECTURE.md) |
+| 실제 로그 확인 순서, 장애 및 업데이트 상태 | [운영 안내](docs/OPERATIONS.md) |
+| 개발 시작, 테스트, 서명·배포·복구 절차 | [개발 안내](docs/DEVELOPMENT.md) |
+| 릴리스 설명·검증 결과 | `releases/<제품버전>/RELEASE_NOTES.md`, `STATUS.md` |
+| 완전한 소스와 회귀 검증 자료 | 릴리스의 `Avata_<내부버전>_Verification.zip` |
+| 실제 자동 업데이트 묶음 | 릴리스의 `Avata_kor-<내부버전>.zip` 및 `avata-update.json` |
+| 메인PC 실행 지원 자료 | `support/mainpc-start-r2/` |
+| 중단한 미니PC 설치 구성 | [archive/minipc-20261105](https://github.com/crosnuu12/Avata-kor-releases/tree/archive/minipc-20261105) |
+
+서명된 최신 업데이트 주소: [avata-update.json](https://github.com/crosnuu12/Avata-kor-releases/releases/latest/download/avata-update.json).
+
+## 자료를 구분하는 기준
+
+- **현재 실행 코드:** 설치된 번들의 `release.json`이 열거한 파일과 해시.
+- **개발 기준 소스:** 선택한 릴리스의 전체 Verification ZIP에서 복원한 `bundle/`, `host/`, 테스트·패키징 파일.
+- **과거 검증용 코드:** `tests/original/`, `tests/stable6/`. 현재 런타임으로 덮어쓰지 않습니다.
+- **이전 릴리스:** 서명된 아카이브와 태그를 변경하지 않습니다. 복구와 변경 비교의 기준입니다.
+- **개인 운영 자료:** 실제 시트 주소, 계좌 원장, 진단 스냅샷, 인증키·토큰, 서명 개인키. 공개 문서나 합성 테스트에 복사하지 않습니다.
+
+이 문서는 1.1.5 / 58.17.11을 기준으로 개발한 **1.1.6 / 58.17.12 최적화안**을 설명합니다. 공개·검증 상태는 해당 릴리스의 `STATUS.md`, 실제 적용 상태는 메인PC 진단으로 확인합니다. 이후 릴리스에서는 `CURRENT_SOURCE.json`과 관련 문서·검증 항목을 함께 갱신합니다.
