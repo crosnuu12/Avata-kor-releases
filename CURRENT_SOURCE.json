@@ -1,0 +1,9 @@
+{
+  "Schema": "AVATA-CURRENT-SOURCE-1",
+  "ProductVersion": "1.1.5",
+  "BundleVersion": "58.17.11",
+  "BundleId": "bundle-6e52a4aafed778273c624ce8",
+  "Archive": "releases/1.1.5/assets/Avata_58.17.11_Verification.zip",
+  "ArchiveSha256": "70c199791e22c51580e170aae80202cf1aa4c04839ea4ae938daaf441f750a4e",
+  "ManifestSha256": "d042aa137070253654b65afb50582978ae9679008467830be4d1c99b9bb89ad7"
+}
