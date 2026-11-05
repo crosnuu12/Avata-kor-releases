@@ -16,7 +16,7 @@
 3. 소스를 수정하려면 [CURRENT_SOURCE.json](CURRENT_SOURCE.json)에 고정한 **Verification ZIP 전체**를 검증해 별도 작업 폴더로 복원합니다. `releases/<제품버전>/source/`는 일부 릴리스에서 변경 파일만 담은 열람용 발췌본입니다.
 
 ```powershell
-python .\\tools\\Prepare-Source.py --dest ..\\avata-work-1.1.6
+python .\tools\Prepare-Source.py --dest ..\avata-work-1.1.6
 ```
 
 Python 3.9 이상이 필요합니다. 대상 폴더의 상위 폴더는 미리 존재해야 하며, 대상은 저장소 밖의 새 폴더여야 합니다. 도구는 내려받기나 실행 없이 고정된 ZIP·manifest·런타임 파일의 SHA256과 경로를 확인하고 전체 소스를 복원합니다. 기존 폴더는 덮어쓰지 않습니다. 신뢰한 저장소 인덱스에 대한 무결성 검사이며, 자동 업데이트의 서명 검증을 대체하지 않습니다.
