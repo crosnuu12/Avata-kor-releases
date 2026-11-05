@@ -1,0 +1,35 @@
+﻿#requires -Version 5.1
+param([string]$Assets,[string]$Kit,[string]$PublicKey)
+$ErrorActionPreference='Stop'
+. (Join-Path $Kit 'host/At58.Ops.ps1')
+. (Join-Path $Kit 'host/At58.Update.ps1')
+$script:ReleasePublicKey=[IO.File]::ReadAllText($PublicKey)
+function Up-PublicKey {return $script:ReleasePublicKey}
+$signed=Up-Envelope (Join-Path $Assets 'avata-update.json')
+function Verify-Remote([string]$feed){
+ $check=Join-Path $env:RUNNER_TEMP ('avata-public-'+[guid]::NewGuid().ToString('N'))
+ try{
+  Ops-WriteJson (Join-Path $check 'settings.json') @{Enabled=$true;FeedUrl=$feed}
+  Ops-WriteJson (Join-Path $check 'active.json') @{Schema='AT58-OFFER-1';Id='bundle-cdb903dbcb470aa59a80ca1d';Version='58.17.10';ManifestHash='8c5f9ab14ef9ad058307818fdf19dae7c10d126e60ea249e4e1790d01e1f717c'}
+  $r=Up-RemoteRefresh $check
+  if($r.State -cne 'CHECKED' -or $r.Version -cne '58.17.11'){throw 'PUBLIC_UPDATE_FAILED'}
+  $o=Up-Offer (Join-Path $check 'remote-channel');if($o.Id -cne $signed.Id -or $o.ManifestHash -cne $signed.ManifestHash){throw 'PUBLIC_IDENTITY_FAILED'}
+ }finally{if(Test-Path $check){Remove-Item -LiteralPath $check -Recurse -Force}}
+}
+foreach($tag in @('v58.17.11','v1.1.5')){
+ $preference=$ErrorActionPreference
+ try{$ErrorActionPreference='Continue';$lookup=gh release view $tag --json isDraft 2>$null;$lookupExit=$LASTEXITCODE}finally{$ErrorActionPreference=$preference}
+ if($lookupExit -eq 0){if(!(($lookup|ConvertFrom-Json).isDraft)){throw 'PUBLISHED_RELEASE_IS_IMMUTABLE'}}else{
+  gh release create $tag --draft --target $env:GITHUB_SHA --title 'Avata 1.1.5 - Main-PC market notifications' --notes-file releases/1.1.5/RELEASE_NOTES.md
+  if($LASTEXITCODE -ne 0){throw 'CREATE_RELEASE_FAILED'}
+ }
+ gh release upload $tag (Join-Path $Assets 'Avata_kor-58.17.11.zip') (Join-Path $Assets 'Avata_58.17.11_Verification.zip') (Join-Path $Assets 'avata-update.json') (Join-Path $Assets 'SHA256SUMS.txt') --clobber
+ if($LASTEXITCODE -ne 0){throw 'UPLOAD_FAILED'}
+}
+gh release edit v58.17.11 --draft=false --latest=false
+if($LASTEXITCODE -ne 0){throw 'VERSION_PUBLICATION_FAILED'}
+Verify-Remote 'https://github.com/crosnuu12/Avata-kor-releases/releases/download/v58.17.11/avata-update.json'
+gh release edit v1.1.5 --draft=false --latest
+if($LASTEXITCODE -ne 0){throw 'LATEST_PROMOTION_FAILED'}
+Verify-Remote 'https://github.com/crosnuu12/Avata-kor-releases/releases/latest/download/avata-update.json'
+Write-Output 'PUBLISHED AND VERIFIED: 1.1.5 / 58.17.11. Public auto-update signature and downloaded package passed. No real account or broker order used.'
