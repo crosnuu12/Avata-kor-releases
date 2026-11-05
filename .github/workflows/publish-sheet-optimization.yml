@@ -1,0 +1,68 @@
+name: Verify and publish Avata 1.1.6 sheet performance optimization
+on:
+  push:
+    branches: [prepare/sheet-optimization-1.1.6, main]
+    paths:
+      - 'releases/1.1.6/**'
+      - '.github/workflows/publish-sheet-optimization.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: avata-sheet-optimization-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Validate signed artifacts and synthetic Windows regression suite
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          python -m pip install --disable-pip-version-check cryptography==50.0.2
+          if($LASTEXITCODE -ne 0){throw 'DEPENDENCY_FAILED'}
+          python tools/Test-Prepare-Source.py
+          if($LASTEXITCODE -ne 0){throw 'SOURCE_TOOL_FAILED'}
+          python tools/Prepare-Source.py --dest (Join-Path $env:RUNNER_TEMP 'avata-source-check')
+          if($LASTEXITCODE -ne 0){throw 'SOURCE_INDEX_FAILED'}
+          python releases/1.1.6/Verify-Assets.py releases/1.1.6
+          if($LASTEXITCODE -ne 0){throw 'ASSETS_FAILED'}
+          $kit=Join-Path $env:RUNNER_TEMP 'avata-sheet-optimization-kit'
+          Expand-Archive -LiteralPath releases/1.1.6/assets/Avata_58.17.12_Verification.zip -DestinationPath $kit
+          . (Join-Path $kit 'host/At58.Ops.ps1')
+          . (Join-Path $kit 'host/At58.Update.ps1')
+          $manifest=Get-Content (Join-Path $kit 'bundle/release.json') -Raw | ConvertFrom-Json
+          $checked=Up-Validate (Join-Path $kit 'bundle') (Ops-Hash (Join-Path $kit 'bundle/release.json'))
+          if($checked.Version -cne '58.17.12'){throw 'CANDIDATE_INVALID'}
+          & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Run-Checks.ps1')
+          if($LASTEXITCODE -ne 0){throw 'REGRESSION_FAILED'}
+          & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Test-TrayRestore.ps1') -HostedRunner
+          if($LASTEXITCODE -ne 0){throw 'TRAY_FAILED'}
+          & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Test-DesktopStartup.ps1')
+          if($LASTEXITCODE -ne 0){throw 'DESKTOP_FAILED'}
+          Write-Output 'SHEET OPTIMIZATION AND REGRESSIONS VERIFIED. No real credentials, Telegram messages or broker orders.'
+  publish:
+    if: github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: windows-latest
+    timeout-minutes: 8
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Publish pre-signed release and verify public auto-update download
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $ErrorActionPreference='Stop'
+          $kit=Join-Path $env:RUNNER_TEMP 'avata-sheet-optimization-kit'
+          Expand-Archive -LiteralPath releases/1.1.6/assets/Avata_58.17.12_Verification.zip -DestinationPath $kit
+          & releases/1.1.6/Publish.ps1 -Assets releases/1.1.6/assets -Kit $kit -PublicKey releases/key-20261104/public-key.xml
