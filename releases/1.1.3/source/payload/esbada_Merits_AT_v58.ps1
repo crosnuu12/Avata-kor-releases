@@ -374,7 +374,8 @@ try{
 
   $u=$script:At58Ui;$box=$script:At58LiveBox;$box.UiUtc=[datetime]::UtcNow.ToString('o')
 
-  try{Ops-WriteJson (Join-Path $ManagementRoot 'runtime.json') ([ordered]@{RunId=$RunId;Pid=$PID;Utc=[datetime]::UtcNow.ToString('o');DesiredRunning=$u.RequestedRunning;Running=$u.Running;Busy=($null -ne $u.Handle);Fault=$u.Fault;ExitReason=$u.ExitReason;ExecutionEnabled=($box.State -cin @('ARMED','STOPPING'));HostProtocol=$HostProtocol;LiveMode=$box.Mode;LiveState=$box.State;LiveCommandPending=($null -ne $box.Command);CommandError=[string]$box.CommandError;AutoStartCode=[string]$script:At58Auto.Code;AutoStartEnabled=[bool]$script:At58Auto.Enabled;AutoStartAttempted=[bool]$script:At58Auto.Attempted;AutoStartSuspended=[bool]$script:At58Auto.Suspended})}catch{}
+  $auto=Get-Variable -Name At58Auto -Scope Script -ValueOnly -ErrorAction SilentlyContinue
+  try{Ops-WriteJson (Join-Path $ManagementRoot 'runtime.json') ([ordered]@{RunId=$RunId;Pid=$PID;Utc=[datetime]::UtcNow.ToString('o');DesiredRunning=$u.RequestedRunning;Running=$u.Running;Busy=($null -ne $u.Handle);Fault=$u.Fault;ExitReason=$u.ExitReason;ExecutionEnabled=($box.State -cin @('ARMED','STOPPING'));HostProtocol=$HostProtocol;LiveMode=$box.Mode;LiveState=$box.State;LiveCommandPending=($null -ne $box.Command);CommandError=[string]$box.CommandError;AutoStartCode=[string](Ops-Get $auto 'Code' '');AutoStartEnabled=[bool](Ops-Get $auto 'Enabled' $false);AutoStartAttempted=[bool](Ops-Get $auto 'Attempted' $false);AutoStartSuspended=[bool](Ops-Get $auto 'Suspended' $false)})}catch{}
 
  }
 
