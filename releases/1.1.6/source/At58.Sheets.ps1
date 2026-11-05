@@ -1019,7 +1019,8 @@ function Asset-PublishPlan($payload,$published,[string]$target,[int]$gridRows,[d
     if($clearEnd -gt $payload.End){$requests.Add(@{repeatCell=@{range=@{sheetId=$id;startRowIndex=[int]$payload.End;endRowIndex=$clearEnd;startColumnIndex=0;endColumnIndex=11};cell=@{};fields='userEnteredValue'}});$writtenRanges++;$writtenCells+=($clearEnd-$payload.End)*11}
    }elseif($layout){
     $copy=At58S-Clone $request
-    if($copy.repeatCell.range.startRowIndex -eq 54){$copy.repeatCell.range.endRowIndex=[math]::Max($copy.repeatCell.range.endRowIndex,$clearEnd)}
+    # Only the base table format extends across a stale tail; title rows stay one row.
+    if($copy.repeatCell.range.startRowIndex -eq 54 -and $copy.repeatCell.fields -ceq 'userEnteredFormat.backgroundColor,userEnteredFormat.textFormat,userEnteredFormat.wrapStrategy,userEnteredFormat.verticalAlignment'){$copy.repeatCell.range.endRowIndex=[math]::Max($copy.repeatCell.range.endRowIndex,$clearEnd)}
     if($copy.repeatCell.range.endRowIndex -gt $rows){$copy.repeatCell.range.endRowIndex=$rows}
     $requests.Add($copy)
    }

@@ -15,7 +15,18 @@ function LedgerRows([int]$count=1){$r=New-Object 'Collections.Generic.List[objec
 function Payload([int]$count=1,[int]$previousEnd=55){$ledger=Asset-Ledger (LedgerRows $count);$report=Asset-CostReport $ledger @();return (Asset-Payload (Snapshot) $ledger $report $null $previousEnd)}
 function IsRequest($request,[string]$kind){return $null -ne (At58-Value $request $kind)}
 function Plans($p,[string]$kind){return ,@($p.Requests|Where-Object {IsRequest $_ $kind})}
+function CheckLayout($plan,$payload,[int]$expectedEnd,[string]$name){
+ $formats=@((Plans $plan 'repeatCell')|Where-Object {$_.repeatCell.fields -cne 'userEnteredValue'})
+ $base=@($formats|Where-Object {$_.repeatCell.cell.userEnteredFormat.textFormat.bold -eq $false})
+ $headers=@($formats|Where-Object {$_.repeatCell.cell.userEnteredFormat.textFormat.bold -eq $true})
+ Check ($base.Count -eq 1 -and $base[0].repeatCell.range.startRowIndex -eq 54 -and $base[0].repeatCell.range.endRowIndex -eq $expectedEnd) ($name+': base format covers the current table and intended stale tail')
+ $expected=@(54,($payload.TransactionHeader-1),$payload.TransactionHeader)|Sort-Object
+ $actual=@($headers|ForEach-Object {$_.repeatCell.range.startRowIndex})|Sort-Object
+ $wide=@($headers|Where-Object {$_.repeatCell.range.endRowIndex -ne ($_.repeatCell.range.startRowIndex+1)})
+ Check ($headers.Count -eq 3 -and $wide.Count -eq 0 -and ($actual -join ',') -ceq ($expected -join ',')) ($name+': all three title formats stay on their single header rows')
+}
 $p=Payload;$plan=Asset-PublishPlan $p $null $target 500 $script:clock
+CheckLayout $plan $p $p.End 'initial publication'
 Check ($plan.Requests.Count -gt 0 -and (Plans $plan 'updateCells').Count -gt 30) 'first publication writes complete report values'
 Check ((Plans $plan 'appendDimension').Count -eq 0) 'small report uses existing compact sheet capacity'
 Check (@((Plans $plan 'repeatCell')|Where-Object {$_.repeatCell.fields -ceq 'userEnteredValue'}).Count -eq 0) 'normal table overwrite avoids redundant clear of all cells'
@@ -40,12 +51,14 @@ Check ((Plans $other 'updateCells').Count -eq (Plans $plan 'updateCells').Count)
 $wrong=$cache|ConvertTo-Json -Depth 20|ConvertFrom-Json;$wrong.Schema='OLD'
 Check ((Asset-PublishPlan $p $wrong $target 500 $script:clock).Requests.Count -gt 0) 'old cache schema is not trusted'
 $big=Payload 450;$grow=Asset-PublishPlan $big $cache $target 500 $script:clock.AddSeconds(20)
+CheckLayout $grow $big $big.End 'capacity growth'
 Check ($grow.GridRows -eq 750 -and (Plans $grow 'appendDimension')[0].appendDimension.length -eq 250) 'capacity grows in bounded chunks only when content exceeds grid'
 Check ($grow.Requests[0].ContainsKey('appendDimension') -and $grow.Requests[1].ContainsKey('copyPaste')) 'capacity and inherited styles precede data writes'
 Check ((Plans $grow 'copyPaste')[0].copyPaste.pasteType -ceq 'PASTE_FORMAT') 'row growth copies formatting without copying old values'
 $grownCache=$grow.Cache|ConvertTo-Json -Depth 20|ConvertFrom-Json
 Check ((Plans (Asset-PublishPlan $big $grownCache $target 750 $script:clock.AddSeconds(30)) 'appendDimension').Count -eq 0) 'repeated report never grows sheet again'
 $shrunk=Asset-PublishPlan $p $grownCache $target 750 $script:clock.AddSeconds(30)
+CheckLayout $shrunk $p $big.End 'table shrink'
 $clear=@((Plans $shrunk 'repeatCell')|Where-Object {$_.repeatCell.fields -ceq 'userEnteredValue'})
 Check ($clear.Count -eq 1 -and $clear[0].repeatCell.range.startRowIndex -eq $p.End -and $clear[0].repeatCell.range.endRowIndex -eq $big.End) 'shrinking report clears only stale generated tail'
 $pending=[pscustomobject]@{Schema='AT-ASSET-PENDING-1';Target=$target;End=$big.End;StartedUtc=$script:clock.ToString('o')}
@@ -104,6 +117,7 @@ $foreign=CopyState $pending;$foreign.Target=Ops-Key 'another-account';$foreign.E
 $ignored=Asset-PublishPlan $p $cache $target 500 $script:clock.AddSeconds(20) $foreign
 Check ($ignored.Requests.Count -eq 0) 'valid other-target pending does not reuse its extent or force current-target writes'
 $unreadable=Asset-PublishPlan $p $cache $target 500 $script:clock.AddSeconds(20) $null @() $true
+CheckLayout $unreadable $p 500 'corrupted state repair'
 $tail=@((Plans $unreadable 'repeatCell')|Where-Object {$_.repeatCell.fields -ceq 'userEnteredValue'})
 Check ($unreadable.FullRefresh -and $tail[0].repeatCell.range.startRowIndex -eq $p.End -and $tail[0].repeatCell.range.endRowIndex -eq 500) 'undecodable existing marker repairs tail while preserving header rows'
 # Exercise actual publisher with isolated protected-state and transport adapters.
