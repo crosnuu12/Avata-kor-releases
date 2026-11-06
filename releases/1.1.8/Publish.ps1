@@ -19,12 +19,18 @@ function Verify-Remote([string]$feed,[string]$baseId,[string]$baseVersion,[strin
 foreach($tag in @('v58.17.14','v1.1.8')){
  $preference=$ErrorActionPreference
  try{$ErrorActionPreference='Continue';$lookup=gh release view $tag --json isDraft 2>$null;$lookupExit=$LASTEXITCODE}finally{$ErrorActionPreference=$preference}
- if($lookupExit -eq 0){if(!(($lookup|ConvertFrom-Json).isDraft)){throw 'PUBLISHED_RELEASE_IS_IMMUTABLE'}}else{
+ $upload=$true
+ if($lookupExit -eq 0){
+  $existing=$lookup|ConvertFrom-Json
+  if(!$existing.isDraft){$upload=$false;Write-Output "Existing published release retained: $tag"}
+ }else{
   gh release create $tag --draft --target $env:GITHUB_SHA --title 'Avata 1.1.8 - Rejected order safe update' --notes-file releases/1.1.8/RELEASE_NOTES.md
   if($LASTEXITCODE -ne 0){throw 'CREATE_RELEASE_FAILED'}
  }
- gh release upload $tag (Join-Path $Assets 'Avata_kor-58.17.14.zip') (Join-Path $Assets 'Avata_58.17.14_Verification.zip') (Join-Path $Assets 'avata-update.json') (Join-Path $Assets 'SHA256SUMS.txt') --clobber
- if($LASTEXITCODE -ne 0){throw 'UPLOAD_FAILED'}
+ if($upload){
+  gh release upload $tag (Join-Path $Assets 'Avata_kor-58.17.14.zip') (Join-Path $Assets 'Avata_58.17.14_Verification.zip') (Join-Path $Assets 'avata-update.json') (Join-Path $Assets 'SHA256SUMS.txt') --clobber
+  if($LASTEXITCODE -ne 0){throw 'UPLOAD_FAILED'}
+ }
 }
 gh release edit v58.17.14 --draft=false --latest=false
 if($LASTEXITCODE -ne 0){throw 'VERSION_PUBLICATION_FAILED'}
