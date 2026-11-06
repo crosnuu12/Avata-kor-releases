@@ -10,7 +10,7 @@ function Verify-Remote([string]$feed){
  $check=Join-Path $env:RUNNER_TEMP ('avata-public-'+[guid]::NewGuid().ToString('N'))
  try{
   Ops-WriteJson (Join-Path $check 'settings.json') @{Enabled=$true;FeedUrl=$feed}
-  Ops-WriteJson (Join-Path $check 'active.json') @{Schema='AT58-OFFER-1';Id='bundle-6e52a4aafed778273c624ce8';Version='58.17.11';ManifestHash='d042aa137070253654b65afb50582978ae9679008467830be4d1c99b9bb89ad7'}
+  Ops-WriteJson (Join-Path $check 'active.json') @{Schema='AT58-OFFER-1';Id='bundle-11fc76ec177e6d55f3a300e6';Version='58.17.12';ManifestHash='16351c5443f98c741ea43304812c4e65b3d8443ca5a8e6282e2a990c0c46527e'}
   $r=Up-RemoteRefresh $check
   if($r.State -cne 'CHECKED' -or $r.Version -cne '58.17.13'){throw 'PUBLIC_UPDATE_FAILED'}
   $o=Up-Offer (Join-Path $check 'remote-channel');if($o.Id -cne $signed.Id -or $o.ManifestHash -cne $signed.ManifestHash){throw 'PUBLIC_IDENTITY_FAILED'}
