@@ -2,7 +2,7 @@
 
 프로젝트 작업은 [길잡이](PROJECT_INDEX.md)에서 시작합니다. 소스 구조, 구글시트, 메인PC 실시간 진단, 검증·배포 경로를 정리했습니다.
 
-1.1.6 / 58.17.12는 시트 표시 데이터의 변경분 전송, 자산 서식 반복 갱신 제거, 필요한 만큼 행 확장을 적용합니다. 전략 입력과 거래 판단 주기는 유지합니다. [릴리스 설명](releases/1.1.6/RELEASE_NOTES.md)과 [검증 상태](releases/1.1.6/STATUS.md)를 확인하세요.
+1.1.7 / 58.17.13은 진단 이벤트와 전후 제한 문맥을 별도 로그 아카이브에 저장하고, 오프라인 큐·재시도·중복 방지와 API 응답 코드 보존을 적용합니다. [릴리스 설명](releases/1.1.7/RELEASE_NOTES.md)과 [검증 상태](releases/1.1.7/STATUS.md)를 확인하세요.
 
 현재 전체 소스는 [CURRENT_SOURCE.json](CURRENT_SOURCE.json)에 고정되어 있습니다. `python tools/Prepare-Source.py --dest ../Avata-working`으로 해시를 확인한 별도 작업 사본을 만듭니다. `source/`는 변경 파일 발췌본입니다.
 
