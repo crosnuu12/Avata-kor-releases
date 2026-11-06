@@ -1,0 +1,3 @@
+41957d25e20a2719aa8e863621e57a02fe7eb020cbd80f6d77902c060c9b33ae  Avata_58.17.14_Verification.zip
+cbcefe71d682bccbf2f1f2af8a8b62858146f40d82dce34a651cf18e4051d275  Avata_kor-58.17.14.zip
+bcda9710fcc658dd45a9e35ab3bb5293a07b25f602c7b571e6d8578dcfcc0a19  avata-update.json
