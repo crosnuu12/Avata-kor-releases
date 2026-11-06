@@ -1,0 +1,90 @@
+--- a/bundle/payload/At58.Core.ps1
++++ b/bundle/payload/At58.Core.ps1
+@@ -4004,7 +4004,7 @@
+ 
+ }
+ 
+-function At58X-Authorize($owner,$session,[string]$sourceHash){
++function At58X-Authorize($owner,$session,[string]$sourceHash,[bool]$acknowledgeRejections=$false){
+ 
+  # Invoked by a local start, an owner-verified one-time Telegram decision, or the local auto-start opt-in.
+ 
+@@ -4022,6 +4022,21 @@
+ 
+  if(@($book.Orders|Where-Object {$_.State -cin @('UNKNOWN','SUBMITTING','WARNING_REVIEW','REVIEW')}).Count){$session.State='REVIEW';At58-Fail 'LIVE_ORDER_REVIEW' 'LIVE_CONTROL'}
+ 
++ # Only an explicit local ARM can acknowledge previously verified terminal
++ # rejections. Consent is held in this run; broker order history is unchanged.
++ $session|Add-Member AcknowledgedRejections @() -Force
++ if($acknowledgeRejections){
++  $view=At58S-Clone $book;if($state.TestOnly){$view.Mode='LIVE_TEST'}
++  $portfolio=At58X-Replay $state.Seed $view $session.Day
++  if($portfolio.Code -ceq 'SIM_ORDER_REJECTED'){
++   if(@($portfolio.Goals|Where-Object {$_.State -cin @('ACTIVE','REVIEW')}).Count){At58-Fail 'LIVE_RECONCILE_WAIT' 'LIVE_CONTROL'}
++   $proofs=@(At58X-RejectProofs $portfolio)
++   if(!$proofs.Count){At58-Fail 'LIVE_ORDER_REJECTED' 'LIVE_CONTROL'}
++   $session.AcknowledgedRejections=$proofs
++   # A restart after a rejection needs two new account reads, even on the same day.
++   $state.Confirmations=0;$state.Proof='';At58X-Save $owner $state
++  }
++ }
+  $session.State='ARMED';$owner.LiveSession=$session
+ 
+ }
+@@ -4104,9 +4119,36 @@
+ 
+ }
+ 
++function At58X-RejectProofs($portfolio){
++ # Fail closed for partial goals, missing broker identity, unresolved quantities,
++ # in a rejected goal. Unrelated active goals keep their normal management path.
++ $goals=At58-Value $portfolio 'Goals'
++ $rejected=@($goals|Where-Object {$_.State -ceq 'REJECTED'})
++ if(!$rejected.Count){return @()}
++ $proofs=New-Object 'Collections.Generic.List[string]'
++ foreach($g in $rejected){
++  if($g.Id -cnotmatch '^[a-f0-9]{64}$' -or $null -eq (At58-Value $g 'Filled') -or $g.Filled -ne 0 -or $null -eq (At58-Value $g 'Amount') -or $g.Amount -ne 0){return @()}
++  $nodes=@($g.Nodes);if(!$nodes.Count){return @()}
++  $evidence=New-Object 'Collections.Generic.List[object]'
++  foreach($o in $nodes){
++   if($o.Action -cne 'NEW' -or $o.State -cne 'REJECTED' -or $o.Key -cnotmatch '^[a-f0-9]{64}$' -or $o.RootKey -cne $o.Key -or $o.BrokerId -cnotmatch '^[0-9]{1,11}$' -or $o.Intent.GoalId -cne $g.Id -or (At58-Value $o 'Issue')){return @()}
++   foreach($field in @('Filled','Amount','Remaining')){if($null -eq (At58-Value $o $field) -or $o.$field -ne 0){return @()}}
++   $evidence.Add([ordered]@{Key=$o.Key;Day=$o.Day;BrokerId=$o.BrokerId;Intent=$o.Intent;State=$o.State;Filled=$o.Filled;Amount=$o.Amount;Remaining=$o.Remaining})
++  }
++  $proofs.Add((At58-Hash ('AT58-REJECT-ACK-1|'+$g.Id+'|'+($evidence.ToArray()|ConvertTo-Json -Depth 12 -Compress))))
++ }
++ return $proofs.ToArray()
++}
++
+ function At58X-HandleTerminalReject($portfolio,$session){
+  if(!$portfolio -or $portfolio.Code -cne 'SIM_ORDER_REJECTED'){return $false}
+- if($session){$session.State='DISARMED'}
++ $proofs=@(At58X-RejectProofs $portfolio)
++ $acknowledged=At58-Value $session 'AcknowledgedRejections'
++ if($session -and $session.State -cin @('ARMED','STOPPING') -and $proofs.Count -gt 0 -and @($proofs|Where-Object {$_ -cnotin $acknowledged}).Count -eq 0){
++  # Normalize only this ephemeral planning view, retaining all rejected nodes.
++  $portfolio.Code='OK';return $false
++ }
++ if($session -and $session.State -cne 'REVIEW'){$session.State='DISARMED'}
+  return $true
+ }
+ 
+@@ -4170,8 +4212,8 @@
+ 
+    $s|Add-Member Strategy ([pscustomobject]@{Reconciled=($state.Confirmations -ge 2);Confirmations=$state.Confirmations}) -Force
+ 
++   $terminalReject=At58X-HandleTerminalReject $p $session
+    $plan=At58L-Candidate $state.Seed $p $s $state.Market $book
+-   $terminalReject=At58X-HandleTerminalReject $p $session
+ 
+   }
+ 
+@@ -4648,7 +4690,7 @@
+ 
+     $session=At58X-NewSession $owner $command.SourceHash $command.Limits
+ 
+-    At58X-Authorize $owner $session $command.SourceHash
++    At58X-Authorize $owner $session $command.SourceHash ($command.Action -ceq 'ARM')
+ 
+    }
+ 
