@@ -1,9 +1,9 @@
 {
   "Schema": "AVATA-CURRENT-SOURCE-1",
-  "ProductVersion": "1.1.7",
-  "BundleVersion": "58.17.13",
-  "BundleId": "bundle-3f617914608248bbb8f82310",
-  "Archive": "releases/1.1.7/assets/Avata_58.17.13_Verification.zip",
-  "ArchiveSha256": "997191f0ac8663e9eef508db5a39e1c7fb81147f24b0e28f7461ae847e645e33",
-  "ManifestSha256": "b20270433d38d4ba830a565d976e5ff07abf63a351f6dba3f79e1691212879a4"
+  "ProductVersion": "1.1.8",
+  "BundleVersion": "58.17.14",
+  "BundleId": "bundle-a9df92f616e201f74d83b9c0",
+  "Archive": "releases/1.1.8/assets/Avata_58.17.14_Verification.zip",
+  "ArchiveSha256": "d49fc3a98f4c3b6adb6de0669351c4397de3f472e99f8dca92d3e40651e3b23a",
+  "ManifestSha256": "fe55e2d8a6031f18ffadc22d8d783a06b22757d4f55da9bd4a73fd7560b53f0e"
 }

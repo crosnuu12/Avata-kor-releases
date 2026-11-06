@@ -1,0 +1,57 @@
+name: Publish Avata 1.1.8 rejected order recovery
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'releases/1.1.8/**'
+      - '.github/workflows/publish-rejected-order.yml'
+permissions:
+  contents: read
+concurrency:
+  group: avata-1-1-8-publish
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Verify signature and Windows regression suite
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          python -m pip install --disable-pip-version-check cryptography==50.0.2
+          if($LASTEXITCODE -ne 0){throw 'DEPENDENCY_FAILED'}
+          python releases/1.1.8/Verify-Assets.py releases/1.1.8
+          if($LASTEXITCODE -ne 0){throw 'ASSETS_FAILED'}
+          $kit=Join-Path $env:RUNNER_TEMP 'avata-1.1.8-kit'
+          Expand-Archive -LiteralPath releases/1.1.8/assets/Avata_58.17.14_Verification.zip -DestinationPath $kit
+          & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Run-Checks.ps1')
+          if($LASTEXITCODE -ne 0){throw 'REGRESSION_FAILED'}
+          & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Test-TrayRestore.ps1') -HostedRunner
+          if($LASTEXITCODE -ne 0){throw 'TRAY_FAILED'}
+          & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Test-DesktopStartup.ps1')
+          if($LASTEXITCODE -ne 0){throw 'DESKTOP_FAILED'}
+  publish:
+    needs: verify
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Publish signed update and verify updates from 58.17.12 and 58.17.13
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $ErrorActionPreference='Stop'
+          $kit=Join-Path $env:RUNNER_TEMP 'avata-1.1.8-kit'
+          Expand-Archive -LiteralPath releases/1.1.8/assets/Avata_58.17.14_Verification.zip -DestinationPath $kit
+          & releases/1.1.8/Publish.ps1 -Assets releases/1.1.8/assets -Kit $kit -PublicKey releases/key-20261104/public-key.xml
+          if($LASTEXITCODE -ne 0){throw 'PUBLISH_FAILED'}
