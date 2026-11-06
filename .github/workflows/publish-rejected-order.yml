@@ -3,8 +3,11 @@ on:
   push:
     branches: [main]
     paths:
-      - 'releases/1.1.8/**'
-      - '.github/workflows/publish-rejected-order.yml'
+      - 'releases/1.1.8/assets/**'
+      - 'releases/1.1.8/Publish.ps1'
+      - 'releases/1.1.8/Build-Assets.py'
+      - 'releases/1.1.8/Verify-Assets.py'
+      - 'releases/1.1.8/RELEASE_NOTES.md'
 permissions:
   contents: read
 concurrency:
