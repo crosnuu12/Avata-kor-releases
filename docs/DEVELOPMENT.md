@@ -32,7 +32,8 @@ powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -Fi
 | 표시 범위·캐시·불확정 전송 복구 | `Test-PresentationWrites.ps1` |
 | 자산 표시·행 확장·캐시 복구 | `Test-AssetOptimization.ps1` |
 | 시트 원장·일지 | `Test-JournalGrouping.ps1`, `Test-InputDiagnostics.ps1` |
-| 진단 수집·전송 | `Test-MainPCDiagnostics.ps1` |
+| 진단 수집·전송 | `Test-MainPCDiagnostics.ps1`, `Test-InputDiagnosticRemote.ps1` |
+| 오류 후 정지·업데이트 | `Test-UpdateQuiescence.ps1`, `Test-UpdateWaitUi.ps1` |
 | 일자 전환·복구 | `Test-DayTransition.ps1`, `Test-Rollover.ps1`, `Test-HostRepair.ps1` |
 | 주문 가격·차수·체결 | `Test-BuyTable.ps1`, `bundle/payload/Test-AT58.ps1` |
 | 개장·마감·장애 알림 | `Test-MarketNotifications.ps1`, `Test-Alerts.ps1` |
@@ -73,3 +74,4 @@ python .\tools\Test-Prepare-Source.py
 - 복구 가능한 코드·시트 백업 위치. 개인 백업 식별자는 공개 문서 대신 비공개 운영 기록에 보관.
 
 소스 인덱스는 아카이브 생성·검증 후 채웁니다. `ArchiveSha256`은 Verification ZIP 원본 바이트, `ManifestSha256`은 그 ZIP 내부 `bundle/release.json` 원본 바이트의 SHA256입니다. 별도로 다시 직렬화한 JSON의 해시를 쓰지 않습니다. 인덱스가 새 버전을 가리키기 전에 복원 도구로 그 정확한 아카이브를 읽어 전체 소스를 재현하는지 확인합니다. 기존 릴리스 파일을 복제해 새로운 기준 폴더를 늘리지 않고, 이 작은 인덱스만 최신 검증본을 가리키게 유지합니다.
+
