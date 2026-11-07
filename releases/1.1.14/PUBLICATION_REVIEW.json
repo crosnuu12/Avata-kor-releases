@@ -1,0 +1,472 @@
+{
+  "base_public_archive_url": "https://github.com/crosnuu12/Avata-kor-releases/releases/download/v1.1.13/Avata_58.17.19_Verification.zip",
+  "base_public_git_path": "releases/1.1.13/assets/Avata_58.17.19_Verification.zip",
+  "base_archive_git_blob": "f65d1d84ab254acc31b33162cf562fa8706835f7",
+  "base_archive_sha256": "dae8732f30b3f56b29d26e34f26af83d0595219cee48e4f5ff841fc9a05ba50f",
+  "new_archive_sha256": "6b4b1c97373d2fad8fc1373cce56b6d6fbf9b60e03b4e8d238064af5a6c13d48",
+  "total_files": 88,
+  "unchanged_already_public_files": [
+    {
+      "path": "Test-Alerts.ps1",
+      "bytes": 10013,
+      "sha256": "44f97047ab1e212de9a78ceb3f41ec2582e8ca530bf5d637a39306e30f611058"
+    },
+    {
+      "path": "Test-ApiDiagnostics.ps1",
+      "bytes": 2016,
+      "sha256": "9c267b6e9d52e010670adbe20e098387631111c383aa0f9ebe67ce7a296be507"
+    },
+    {
+      "path": "Test-AutoStartTray.ps1",
+      "bytes": 12070,
+      "sha256": "458887d415c3aba0b1d2d64bc795ace3a4098c140d26191cef6af8e6ff8eca98"
+    },
+    {
+      "path": "Test-BuyTable.ps1",
+      "bytes": 12563,
+      "sha256": "cb5632f1ff9dc609c068f00e74e0a757193d492e468bcb0601fb4018d4e52886"
+    },
+    {
+      "path": "Test-CashInterest.ps1",
+      "bytes": 13775,
+      "sha256": "885166dac9e54b957bb877ee45ef61abf888b685451ac45921920142a261011c"
+    },
+    {
+      "path": "Test-DayTransition.ps1",
+      "bytes": 14872,
+      "sha256": "113d531cec45222b961abf991d508b9f4b153086d3feb3ae059cf1d046d11300"
+    },
+    {
+      "path": "Test-DesktopStartup.ps1",
+      "bytes": 3746,
+      "sha256": "0350838296b07b1b763223e156518d5dfad2e834a55b871b32af53f1f934f3ce"
+    },
+    {
+      "path": "Test-DiagnosticArchive.ps1",
+      "bytes": 18505,
+      "sha256": "2fce61fcacfb731a8612fd164e00cfa78754b0059cd380c976e0da25ebd244ce"
+    },
+    {
+      "path": "Test-HiddenAutoRead.ps1",
+      "bytes": 4622,
+      "sha256": "e9c21e10110bde16e67ee5d33718f6f03441134a58658d7b33df28df5f011f44"
+    },
+    {
+      "path": "Test-HiddenStartup.ps1",
+      "bytes": 3375,
+      "sha256": "7da8429b39515f5464cfa2d4577d34719cc77d0e090716834a4948aa9fd428f2"
+    },
+    {
+      "path": "Test-HostRepair.ps1",
+      "bytes": 3706,
+      "sha256": "da26bb6fdf1d4b1c93957ca53ca436b25fac7b4c419da38082da3b8e04cc298a"
+    },
+    {
+      "path": "Test-InputDiagnosticRemote.ps1",
+      "bytes": 9464,
+      "sha256": "58683501a6daf816b717163ddd48d78b5c0ea5057979d8a26ee5b2ac1a0d977b"
+    },
+    {
+      "path": "Test-InputDiagnostics.ps1",
+      "bytes": 10756,
+      "sha256": "1cf82d7aff48f2bbdb5c809435830e8b56d773ddbc960b5fffd66933cbed4299"
+    },
+    {
+      "path": "Test-MarketNotifications.ps1",
+      "bytes": 8517,
+      "sha256": "917ced6052bb81ec8fa00e5627f0ded35f24d66963596e2b2e1fb277e217a90e"
+    },
+    {
+      "path": "Test-PresentationWrites.ps1",
+      "bytes": 13986,
+      "sha256": "61e6351fae6cecb8d1ef2cc4c6f644578259a8db7b3e827aeb9035af7999d1d3"
+    },
+    {
+      "path": "Test-RecoveryDialog.ps1",
+      "bytes": 9276,
+      "sha256": "62c4d8670611e38a7a5a8253ff1c291a8bf5967a0d10d530be94632484ff1164"
+    },
+    {
+      "path": "Test-RejectResume.ps1",
+      "bytes": 26864,
+      "sha256": "86e510703ad94ac4c27546fa9a062f9712628119f16347303a333addc4c0ec50"
+    },
+    {
+      "path": "Test-Rollover.ps1",
+      "bytes": 12579,
+      "sha256": "daa552191552021e51d116c867ed535283a6ee6ac9019e95d24fc9aad47fbb62"
+    },
+    {
+      "path": "Test-TelegramWorker.ps1",
+      "bytes": 3814,
+      "sha256": "cb37132f258c43479742eb1172c6608c1ffa15d0600ac4022ed723d1cce3718e"
+    },
+    {
+      "path": "Test-TimeoutRecovery.ps1",
+      "bytes": 9494,
+      "sha256": "e5661d00caf917bd50d1d03237cef145bf3e26023fa7b9abe0feeabe8f50be91"
+    },
+    {
+      "path": "Test-UpdateQuiescence.ps1",
+      "bytes": 17548,
+      "sha256": "9da512e8bfec87634065d5bc4d6f3df57c3fe563067076c4dfa3b87dcc01c0d5"
+    },
+    {
+      "path": "Test-WindowPreferences.ps1",
+      "bytes": 2937,
+      "sha256": "0086d6035d7f3d29a2b4a0ee2eb29443e5ea5e3e3a9e052c180d62530bf5a1d9"
+    },
+    {
+      "path": "Test-WorkerDiagnostics.ps1",
+      "bytes": 6995,
+      "sha256": "3c506a4f93bc7d19c0b06ff038a5070d1eaba8dfa6619e7f6aa204cc9b9246ae"
+    },
+    {
+      "path": "bundle/At58.Ops.ps1",
+      "bytes": 27867,
+      "sha256": "e081c13fc4219fda3fd7be58f9e7369c28c5db9d1bfdc7d58aee3c5613148dd1"
+    },
+    {
+      "path": "bundle/At58.Repair.ps1",
+      "bytes": 5083,
+      "sha256": "b0d5ded4e3739265d497d1c93d88aba4704d509ef7c7bf72ea87b01c6d794294"
+    },
+    {
+      "path": "bundle/At58.SheetWorker.ps1",
+      "bytes": 7108,
+      "sha256": "e88ccb5ea6e3a8e1ee3f316a90d7c6033cd9bd58c18f63d80c5d55b0b0b37e6b"
+    },
+    {
+      "path": "bundle/At58.SheetsJwt.ps1",
+      "bytes": 3216,
+      "sha256": "ec8aeb47702cf7512371420a10d0aa827dbf821119366f6a277519134380353f"
+    },
+    {
+      "path": "bundle/At58.Telegram.ps1",
+      "bytes": 32007,
+      "sha256": "1093134e0c39a0ec327ae3ce7d98d2d0429a662a18ff96c763dabaa389afb442"
+    },
+    {
+      "path": "bundle/payload/At58.Log.ps1",
+      "bytes": 6621,
+      "sha256": "a4a04e49477e1a437a0075c3953bea063644ec45bc389f9e367bafb2be6d7764"
+    },
+    {
+      "path": "bundle/payload/Test-AT58.ps1",
+      "bytes": 16135,
+      "sha256": "742b11d68194adbbb2d71dd2128421a5bdc795aa1c2ddd092881e80d2f68598a"
+    },
+    {
+      "path": "bundle/payload/Test-AT58LogViewer.ps1",
+      "bytes": 2185,
+      "sha256": "66c1351f56d90a45e8e2608a2ae285ad57b7166388bc4adf12ab8f1d2d0fee61"
+    },
+    {
+      "path": "host/At58.Host.ps1",
+      "bytes": 12521,
+      "sha256": "11aaa8514e66da8db9c1d9e3f86aaa5581b5d8fabd1d7b6e33fd6e0834244247"
+    },
+    {
+      "path": "host/At58.Ops.ps1",
+      "bytes": 19628,
+      "sha256": "9e8430c927f1c158a4cac168b43b09722b2dc06d2b760c9f637b2b58187996f1"
+    },
+    {
+      "path": "host/At58.Update.ps1",
+      "bytes": 18533,
+      "sha256": "c8b5e941134c2252f509eab15c7755870d43aa55113a601b9a59906b1c9e44b3"
+    },
+    {
+      "path": "recovery/Repair_Input_After_Transfer.ps1",
+      "bytes": 13451,
+      "sha256": "c2646cd5047835bc026209e6b358cf93130840ebd70637d91e526c1395d9bbd0"
+    },
+    {
+      "path": "recovery/Verify_Cash_Interest.ps1",
+      "bytes": 2404,
+      "sha256": "0a3a0d5ec59ea9b26c34d48b474fae01f775e3afa76b9f0994cfc7b944075103"
+    },
+    {
+      "path": "tests/CashFixture.ps1",
+      "bytes": 3109,
+      "sha256": "3256582ced62e9b0c2059ab9b1ad2b13fab9371f80e8b24f700e14cb5fec80ef"
+    },
+    {
+      "path": "tests/Invoke-RolloverWorker.ps1",
+      "bytes": 1329,
+      "sha256": "406cecbd6b14889a4669259e07938c794aa39b4d08028454a22d5d38e6929640"
+    },
+    {
+      "path": "tests/original/At58.Host.ps1",
+      "bytes": 11858,
+      "sha256": "101598fec8ed6719ac742f7be832c944497aded49b1d5a7663b16e3bcf3e34ab"
+    },
+    {
+      "path": "tests/original/At58.Ops.ps1",
+      "bytes": 18897,
+      "sha256": "42d6058e91b68e15e5fa14953bee6c129ee171c69f02dd5b9ed26cd1f3864a44"
+    },
+    {
+      "path": "tests/original/At58.Update.ps1",
+      "bytes": 17499,
+      "sha256": "b6c662070656820aa2331caabab196796063f4de23ac38732c4ad72b7b99823b"
+    },
+    {
+      "path": "tests/original/channel/ready.json",
+      "bytes": 166,
+      "sha256": "736e2020bcad671c2150a4343d5efb97446e4b90ae098668d6e2012bcf542432"
+    },
+    {
+      "path": "tests/original/channel/releases/bundle-a1911e62f3f0341a1353e7b7/At58.Manager.ps1",
+      "bytes": 16237,
+      "sha256": "58acd0c8237a05f920334eea26b3419d95effad5eb98b645b5f3dd99bf011a79"
+    },
+    {
+      "path": "tests/original/channel/releases/bundle-a1911e62f3f0341a1353e7b7/At58.Ops.ps1",
+      "bytes": 18897,
+      "sha256": "42d6058e91b68e15e5fa14953bee6c129ee171c69f02dd5b9ed26cd1f3864a44"
+    },
+    {
+      "path": "tests/original/channel/releases/bundle-a1911e62f3f0341a1353e7b7/At58.Repair.ps1",
+      "bytes": 5083,
+      "sha256": "b0d5ded4e3739265d497d1c93d88aba4704d509ef7c7bf72ea87b01c6d794294"
+    },
+    {
+      "path": "tests/original/channel/releases/bundle-a1911e62f3f0341a1353e7b7/At58.SheetWorker.ps1",
+      "bytes": 6356,
+      "sha256": "b7b6b3d899d1e3ffd9e8e4c74e364274e11f44bc4c3107e1516db988d447ba19"
+    },
+    {
+      "path": "tests/original/channel/releases/bundle-a1911e62f3f0341a1353e7b7/At58.Sheets.ps1",
+      "bytes": 61687,
+      "sha256": "13538fe9fd7ef1c7a3c302f5f52514fbba18b688cd13c80400135639bf797404"
+    },
+    {
+      "path": "tests/original/channel/releases/bundle-a1911e62f3f0341a1353e7b7/At58.SheetsJwt.ps1",
+      "bytes": 3216,
+      "sha256": "ec8aeb47702cf7512371420a10d0aa827dbf821119366f6a277519134380353f"
+    },
+    {
+      "path": "tests/original/channel/releases/bundle-a1911e62f3f0341a1353e7b7/At58.Telegram.ps1",
+      "bytes": 20417,
+      "sha256": "e04d8ecb7bea1752bc762242eb3a8f26ad181027d1dd3608b9e702f08a484d2a"
+    },
+    {
+      "path": "tests/original/channel/releases/bundle-a1911e62f3f0341a1353e7b7/payload/At58.Core.ps1",
+      "bytes": 213995,
+      "sha256": "2b8133693926cae3ed26c25185527f8d5178be9ed4cd28c62253d87173dd13d9"
+    },
+    {
+      "path": "tests/original/channel/releases/bundle-a1911e62f3f0341a1353e7b7/payload/At58.Log.ps1",
+      "bytes": 6588,
+      "sha256": "caf1613bee9a5ef059dd15d514aa542cf22c241a7f5f33bacd19b51d79c45134"
+    },
+    {
+      "path": "tests/original/channel/releases/bundle-a1911e62f3f0341a1353e7b7/payload/Test-AT58.ps1",
+      "bytes": 16047,
+      "sha256": "1ba7074a8b94aa8c7f1220ceba5614bbfb2ce7b0de948f4ddbc20d9442f8f9a6"
+    },
+    {
+      "path": "tests/original/channel/releases/bundle-a1911e62f3f0341a1353e7b7/payload/Test-AT58LogViewer.ps1",
+      "bytes": 2185,
+      "sha256": "66c1351f56d90a45e8e2608a2ae285ad57b7166388bc4adf12ab8f1d2d0fee61"
+    },
+    {
+      "path": "tests/original/channel/releases/bundle-a1911e62f3f0341a1353e7b7/payload/esbada_Merits_AT_v58.ps1",
+      "bytes": 32635,
+      "sha256": "e6b3f4f3db9e531abe5f05fe00d3d898e6d1601efff55b21581ec3c32b8b155c"
+    },
+    {
+      "path": "tests/original/channel/releases/bundle-a1911e62f3f0341a1353e7b7/release.json",
+      "bytes": 1558,
+      "sha256": "972672bba0304b22dbad4cbef7cb77a130e7989eb25d8aae306a849fc1ad0efe"
+    },
+    {
+      "path": "tests/stable6/bundle/At58.Manager.ps1",
+      "bytes": 15896,
+      "sha256": "3375cfadc64e8f3791aa2745f950a483c2e52dd720e23c921e09e8958f2cb8b6"
+    },
+    {
+      "path": "tests/stable6/bundle/At58.Ops.ps1",
+      "bytes": 20354,
+      "sha256": "e0ead5e009b7c135b4c9b11b7c0fd9bc148011e4ae2d03c0f1dc42f9496ed7ef"
+    },
+    {
+      "path": "tests/stable6/bundle/At58.Repair.ps1",
+      "bytes": 5083,
+      "sha256": "b0d5ded4e3739265d497d1c93d88aba4704d509ef7c7bf72ea87b01c6d794294"
+    },
+    {
+      "path": "tests/stable6/bundle/At58.SheetWorker.ps1",
+      "bytes": 6519,
+      "sha256": "e13efb0cb71ff272f7bfeb933db7ed1156d1a960b09755e5b26a94e51875ff0b"
+    },
+    {
+      "path": "tests/stable6/bundle/At58.Sheets.ps1",
+      "bytes": 62221,
+      "sha256": "6f9f8141dc8f865897f799c6f007da3cc2a2e30eee254feb1189ae2daeeb3ce4"
+    },
+    {
+      "path": "tests/stable6/bundle/At58.SheetsJwt.ps1",
+      "bytes": 3216,
+      "sha256": "ec8aeb47702cf7512371420a10d0aa827dbf821119366f6a277519134380353f"
+    },
+    {
+      "path": "tests/stable6/bundle/At58.Telegram.ps1",
+      "bytes": 20417,
+      "sha256": "e04d8ecb7bea1752bc762242eb3a8f26ad181027d1dd3608b9e702f08a484d2a"
+    },
+    {
+      "path": "tests/stable6/bundle/payload/At58.Core.ps1",
+      "bytes": 226889,
+      "sha256": "af800d8309353d44ff7af930f12496bee68768e5e6cfd1d2ea8a6c83ea17975c"
+    },
+    {
+      "path": "tests/stable6/bundle/payload/At58.Log.ps1",
+      "bytes": 6588,
+      "sha256": "caf1613bee9a5ef059dd15d514aa542cf22c241a7f5f33bacd19b51d79c45134"
+    },
+    {
+      "path": "tests/stable6/bundle/payload/Test-AT58.ps1",
+      "bytes": 16047,
+      "sha256": "1ba7074a8b94aa8c7f1220ceba5614bbfb2ce7b0de948f4ddbc20d9442f8f9a6"
+    },
+    {
+      "path": "tests/stable6/bundle/payload/Test-AT58LogViewer.ps1",
+      "bytes": 2185,
+      "sha256": "66c1351f56d90a45e8e2608a2ae285ad57b7166388bc4adf12ab8f1d2d0fee61"
+    },
+    {
+      "path": "tests/stable6/bundle/payload/esbada_Merits_AT_v58.ps1",
+      "bytes": 39775,
+      "sha256": "9eed5801dbd824a77bd46e67890b453d592e6794d4c2a644b2802868ca527843"
+    },
+    {
+      "path": "tests/stable6/bundle/release.json",
+      "bytes": 1558,
+      "sha256": "245ba35745d96320127c862218861e013dab09821e11ef3c16c596af56132f10"
+    },
+    {
+      "path": "tests/stable6/offer.json",
+      "bytes": 166,
+      "sha256": "fa17c9e031efa21dcd2560f14efd5a595eaa57e8fbaa2353364e89c9ef99cbe4"
+    }
+  ],
+  "changed_from_public_files": [
+    {
+      "path": "Package-Candidate.py",
+      "bytes": 1724,
+      "sha256": "6b7e05e1767793b210075b391cb44286ef4e723c38cc58f8140203d1e43a82e9",
+      "prior_sha256": "28b2cc611c7af41c8888e9c497fe6b5ea26211c445647c68013ed64a64abee94"
+    },
+    {
+      "path": "README.md",
+      "bytes": 1409,
+      "sha256": "008b5e3fdd9c5b4eccf1f0ac422eb0ea3f05073483ee1df1247da77f483a31ea",
+      "prior_sha256": "f55e0997dd473fdc59f27bb8cbf6296c97de8003dc9763ce0858e275bf31f09f"
+    },
+    {
+      "path": "README_KO.md",
+      "bytes": 1299,
+      "sha256": "dd7c87f885ff5e06fa9b77b3d903a8d720b19930bce4c0e6b84ccd19de592fc1",
+      "prior_sha256": "14aee7059e9511b230fe42b6a485ffa71b290fd2d64041ad3649e26570cf387f"
+    },
+    {
+      "path": "Run-Checks.ps1",
+      "bytes": 2884,
+      "sha256": "2758b0e9b580afcaad3d2d7cdd949bd9b753b82cff4e0e185c9264aa080946a1",
+      "prior_sha256": "fa03f08657c51e5b56666c58b1e53231800e9564a988a5020e5688c323c6f763"
+    },
+    {
+      "path": "Test-AssetOptimization.ps1",
+      "bytes": 21849,
+      "sha256": "e82d31e64a2954199b2ae0954cc1e11b1c110bb2af70efc907eda76368fb35e7",
+      "prior_sha256": "07c745ae23561af2631bf87e04e4f2dbc3121cc9f7e9bb37793d88707c7b044c"
+    },
+    {
+      "path": "Test-JournalGrouping.ps1",
+      "bytes": 19804,
+      "sha256": "b6f35c00f31091668f7cd0f43b519f776dd3f33b9794c517d5bf5d5745f8638e",
+      "prior_sha256": "4cb3d386e04eab2de4e840df94b12510fb499f6057d86af892eabe76d83f69fa"
+    },
+    {
+      "path": "Test-MainPCDiagnostics.ps1",
+      "bytes": 12380,
+      "sha256": "48ae6950c823673dc528ebacdfc9eb0afa250f58584a7b27d8a1d11e09e8d4fe",
+      "prior_sha256": "2ff094b54f5da3d70c5004767a11bd7ac431a469f52df99b5925b96ce5f33ef5"
+    },
+    {
+      "path": "Test-TelegramStart.ps1",
+      "bytes": 18083,
+      "sha256": "d7eed39eb5cee21c5ddd3546e3434654ec0c99cd3cfd257cb1b8fac42b90ea28",
+      "prior_sha256": "89a16b770192d651685dd4e85ead732b4e154bc03d7ce04113cb76569c938b74"
+    },
+    {
+      "path": "Test-TrayRestore.ps1",
+      "bytes": 6544,
+      "sha256": "b8052a74e9dc1e4f57c984c71380f49d7368756c2c5ad6f6bb3982248e3a773d",
+      "prior_sha256": "692b315f0575afccab42a847f6fea84a259374ca1fbc73b8950a2f85d9cefec6"
+    },
+    {
+      "path": "Test-UpdateWaitUi.ps1",
+      "bytes": 18669,
+      "sha256": "5c1a6740d98b436b12a5d7527219f100cd531fec99b1f5038fb7b86631815dcb",
+      "prior_sha256": "bc1395b61d29296ea11b484c189083aca29258eff1fa7654d722ddcfaa9c2fe0"
+    },
+    {
+      "path": "VALIDATION_STATUS.json",
+      "bytes": 269,
+      "sha256": "4a6e1ba0fcbba561df8431d988e9debc66aefef49c8a3910207cfb4b5a6b990f",
+      "prior_sha256": "b51a0d98157c8b998128b8b8d645b0279ba6c47d11968f5e8c3e965974bbf46d"
+    },
+    {
+      "path": "bundle/At58.Manager.ps1",
+      "bytes": 16535,
+      "sha256": "39a9581e1d512bc4811139c4a6688f893775bcaae021327e5523cb2fd816c82f",
+      "prior_sha256": "b6e463419b3ca89b54428ece89eb4c880de14053a39f0f1a4d5bcddb6834f84c"
+    },
+    {
+      "path": "bundle/At58.Sheets.ps1",
+      "bytes": 130403,
+      "sha256": "4a58d5c874690121185f43483e33c3d9cf552ed50aa44ae6212b5f7b197de01e",
+      "prior_sha256": "4dc78ad8fc7ef67a8ae3c39c0ee44f9839a8bca05d2691dc2a26728e082e83c8"
+    },
+    {
+      "path": "bundle/payload/At58.Core.ps1",
+      "bytes": 277400,
+      "sha256": "3924e1f8e8ce1e94eeea9fb6f6b2d11ff27af797931a597935853e604a20f596",
+      "prior_sha256": "1dfdea58f7c77b9ec01bed0367a8f73cd0ed2cca9ff7e96e312acf340c7ea2e2"
+    },
+    {
+      "path": "bundle/payload/esbada_Merits_AT_v58.ps1",
+      "bytes": 59332,
+      "sha256": "b553967a479613b24c5675afe417cbbd01531490769d863035222cde9f341a61",
+      "prior_sha256": "3bb66852da150ca414307752b9cb6f77a98d0d135a2a7ca872aaf76afc349ef0"
+    },
+    {
+      "path": "bundle/release.json",
+      "bytes": 1560,
+      "sha256": "96225d7083ddba2c658b1682628c074255aa1064890834e06a255cb34b71ca57",
+      "prior_sha256": "2afab57ff48f46689be9805439f58dbe0f2dab61365baff3604306db5fe0dcfd"
+    }
+  ],
+  "new_synthetic_tests_only": [
+    {
+      "path": "Test-AuthDiagnosticRemote.ps1",
+      "bytes": 16244,
+      "sha256": "f5d486acfe6b626549c71b8017f53ced1f3aec1e48f28b55005641f19d8099cf"
+    },
+    {
+      "path": "Test-AuthLiveIntent.ps1",
+      "bytes": 8530,
+      "sha256": "c46fd098eed17fc6f10790006190e0c2dd10e6d4397d8e63bf53ccee76b0fa4e"
+    },
+    {
+      "path": "Test-AuthRecovery.ps1",
+      "bytes": 10837,
+      "sha256": "d8190607941b9e369f42d40e36f7023bd72bd7d2d6219e9c0470e0a139837364"
+    }
+  ],
+  "removed_files": [],
+  "sensitive_scan": "No actual private PEM blocks or known private diagnostic identifiers in any of the 88 source archive files."
+}

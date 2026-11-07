@@ -33,6 +33,7 @@ powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -Fi
 | 자산 표시·행 확장·캐시 복구 | `Test-AssetOptimization.ps1` |
 | 시트 원장·일지 | `Test-JournalGrouping.ps1`, `Test-InputDiagnostics.ps1` |
 | 진단 수집·전송 | `Test-MainPCDiagnostics.ps1`, `Test-InputDiagnosticRemote.ps1` |
+| 인증 갱신·반복 실패·실주문 의도 | `Test-AuthRecovery.ps1`, `Test-AuthDiagnosticRemote.ps1`, `Test-AuthLiveIntent.ps1` |
 | 오류 후 정지·업데이트 | `Test-UpdateQuiescence.ps1`, `Test-UpdateWaitUi.ps1` |
 | 일자 전환·복구 | `Test-DayTransition.ps1`, `Test-Rollover.ps1`, `Test-HostRepair.ps1` |
 | 주문 가격·차수·체결 | `Test-BuyTable.ps1`, `bundle/payload/Test-AT58.ps1` |
