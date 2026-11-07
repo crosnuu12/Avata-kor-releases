@@ -2,7 +2,7 @@
 
 프로젝트 작업은 [길잡이](PROJECT_INDEX.md)에서 시작합니다. 소스 구조, 구글시트, 메인PC 실시간 진단, 검증·배포 경로를 정리했습니다.
 
-1.1.8 / 58.17.14는 체결·잔량 0건인 확정 거부 주문과 미해결 주문을 구분합니다. 거부 주문은 실주문을 중지하고 `LIVE_ORDER_REJECTED`로 알리며, 두 번의 새 계좌 대조 뒤 업데이트를 이어갑니다. [릴리스 설명](releases/1.1.8/RELEASE_NOTES.md)과 [검증 상태](releases/1.1.8/STATUS.md)를 확인하세요.
+1.1.9 / 58.17.15는 확정된 과거 주문 거부 후 `실주문 시작`을 직접 눌러 재개할 수 있게 합니다. 새 계좌 대조 2회 후 장외 대기와 개장 시 조건 판단을 이어가며, 새 거부·불확실 주문은 계속 차단합니다. [릴리스 설명](releases/1.1.9/RELEASE_NOTES.md)과 [검증 상태](releases/1.1.9/STATUS.md)를 확인하세요.
 
 현재 전체 소스는 [CURRENT_SOURCE.json](CURRENT_SOURCE.json)에 고정되어 있습니다. `python tools/Prepare-Source.py --dest ../Avata-working`으로 해시를 확인한 별도 작업 사본을 만듭니다. `source/`는 변경 파일 발췌본입니다.
 
