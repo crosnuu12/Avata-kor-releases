@@ -1,10 +1,16 @@
 # 릴리스 상태
 
+상태: 공개 및 자동 업데이트 검증 완료
+
 - 버전: 1.1.9 / 58.17.15
-- 주문 거부 후 수동 재개 수정: Windows PowerShell 5.1 새 회귀 30개 및 기존 전체 검증 통과 (PR #15의 소스 검증)
-- 버전·패키지를 포함한 최종 Windows 검증: 배포 워크플로에서 실행
-- 서명키: 기존 설치본의 공개 검증키 유지
-- 공개 배포: 검증 성공 후 main 병합 배포 작업에서 수행
+- Windows PowerShell 5.1: 23개 테스트 스크립트 전체 통과 (거부 후 재개 회귀 30개 포함)
+- 트레이 복원 18개·바탕화면 시작 4개·소스 복원 도구 10개 검증: 통과
+- 기존 공개키 서명·패키지·manifest·전체 소스·체크섬 검증: 통과
+- 58.17.12·58.17.13·58.17.14 기준 버전별 공개 피드 조회: 통과
+- 최신 v1.1.9 피드의 실제 다운로드·서명·패키지 확인: 통과
+- 공개 배포: 완료 (2026-11-07)
 - PC 설치: 미확인
 
-[현재 배포 작업](https://github.com/crosnuu12/Avata-kor-releases/actions/workflows/release-reject-resume.yml)의 성공 여부와 공개 피드 확인 로그가 최종 배포 증거입니다. 배포 완료와 사용자 PC 설치 완료는 별개입니다. 테스트에서 실계좌·실주문·텔레그램 메시지는 사용하지 않습니다.
+[최종 Windows 검증 및 배포 실행](https://github.com/crosnuu12/Avata-kor-releases/actions/runs/42315926746) · [릴리스](https://github.com/crosnuu12/Avata-kor-releases/releases/tag/v1.1.9) · [수정 PR #15](https://github.com/crosnuu12/Avata-kor-releases/pull/15)
+
+실계좌·실주문·텔레그램 메시지는 검증에 사용하지 않았습니다. 공개 배포와 PC 설치 완료는 별개입니다. 기존 앱의 업데이트 적용 후 버전 1.1.9를 확인하고 화면에서 실주문 시작을 직접 눌러 현재 계좌·대기 상태를 확인합니다.
