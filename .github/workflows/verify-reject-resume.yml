@@ -1,0 +1,32 @@
+name: Verify rejected-order manual resume
+on:
+  push:
+    branches: [fix/reject-resume-20261107]
+permissions:
+  contents: read
+concurrency:
+  group: reject-resume-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  windows-powershell-51:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Apply isolated source candidate and run regression tests
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          $archive='releases/1.1.8/assets/Avata_58.17.14_Verification.zip'
+          if((Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant() -cne 'd49fc3a98f4c3b6adb6de0669351c4397de3f472e99f8dca92d3e40651e3b23a'){throw 'BASE_ARCHIVE_MISMATCH'}
+          $kit=Join-Path $env:RUNNER_TEMP 'avata-reject-resume'
+          Expand-Archive -LiteralPath $archive -DestinationPath $kit
+          python fixes/reject-resume/Apply-Patch.py $kit
+          if($LASTEXITCODE -ne 0){throw 'PATCH_FAILED'}
+          Copy-Item fixes/reject-resume/Test-RejectResume.ps1 $kit
+          & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Test-RejectResume.ps1')
+          if($LASTEXITCODE -ne 0){throw 'REJECT_RESUME_TEST_FAILED'}
+          & powershell.exe -NoProfile -NonInteractive -STA -ExecutionPolicy RemoteSigned -File (Join-Path $kit 'Run-Checks.ps1')
+          if($LASTEXITCODE -ne 0){throw 'REGRESSION_FAILED'}
